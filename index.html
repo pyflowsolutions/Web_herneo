@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dulces Temáticos Artesanales</title>
+  <title>Admin · Dulce Atelier</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -13,842 +14,693 @@
       --rose:      #C97B84;
       --rose-pale: #F5E6E8;
       --cream:     #FDF8F3;
-      --cream2:    #F9F0E6;
       --dark:      #2B1B17;
       --brown:     #7A4F3A;
       --muted:     #9C7B6B;
       --gold:      #C9963A;
       --border:    rgba(43,27,23,0.1);
+      --bg:        #F7F3EF;
       --white:     #FFFFFF;
     }
 
-    html { scroll-behavior: smooth; }
-
     body {
       font-family: 'Jost', sans-serif;
-      background: var(--cream);
+      background-color: var(--bg);
       color: var(--dark);
+      display: flex;
       min-height: 100vh;
-      font-weight: 300;
     }
 
-    /* ── HERO ─────────────────────────────── */
-    .hero {
-      background: var(--dark);
-      min-height: 92vh;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: 
-        radial-gradient(ellipse 80% 60% at 70% 50%, rgba(201,123,132,0.18) 0%, transparent 70%),
-        radial-gradient(ellipse 50% 80% at 20% 80%, rgba(201,150,58,0.12) 0%, transparent 60%);
-      pointer-events: none;
-    }
-
-    .hero-text {
+    /* ── SIDEBAR ── */
+    aside {
+      width: 260px;
+      background-color: var(--white);
+      border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      padding: 5rem 4rem 5rem 6rem;
-      position: relative;
-      z-index: 1;
-    }
-
-    .hero-eyebrow {
-      font-size: 10px;
-      letter-spacing: 0.35em;
-      text-transform: uppercase;
-      color: var(--rose);
-      margin-bottom: 1.75rem;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .hero-eyebrow::before {
-      content: '';
-      width: 32px;
-      height: 1px;
-      background: var(--rose);
-    }
-
-    .hero h1 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(3rem, 5vw, 5.5rem);
-      font-weight: 300;
-      color: #fff;
-      line-height: 1.05;
-      margin-bottom: 1.5rem;
-    }
-    .hero h1 em {
-      font-style: italic;
-      color: var(--rose);
-    }
-
-    .hero-desc {
-      font-size: 15px;
-      color: rgba(255,255,255,0.45);
-      line-height: 1.8;
-      max-width: 380px;
-      margin-bottom: 2.5rem;
-    }
-
-    .hero-actions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .btn-rose {
-      background: var(--rose);
-      color: #fff;
-      border: none;
-      padding: 13px 28px;
-      border-radius: 40px;
-      font-size: 13px;
-      font-family: 'Jost', sans-serif;
-      font-weight: 400;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background 0.2s;
-    }
-    .btn-rose:hover { background: #b5636d; }
-
-    .btn-ghost {
-      background: none;
-      color: rgba(255,255,255,0.6);
-      border: 1px solid rgba(255,255,255,0.2);
-      padding: 13px 28px;
-      border-radius: 40px;
-      font-size: 13px;
-      font-family: 'Jost', sans-serif;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.2s;
-    }
-    .btn-ghost:hover { border-color: rgba(255,255,255,0.5); color: #fff; }
-
-    /* HERO VISUAL SIDE */
-    .hero-visual {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem;
-    }
-
-    .hero-cake-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      width: 100%;
-      max-width: 420px;
-    }
-
-    .hero-cake-card {
-      border-radius: 16px;
-      overflow: hidden;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.08);
-      aspect-ratio: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 3.5rem;
-      position: relative;
-      transition: transform 0.3s;
-    }
-    .hero-cake-card:first-child { grid-row: span 2; aspect-ratio: auto; font-size: 5rem; }
-    .hero-cake-card:hover { transform: scale(1.02); }
-
-    .hero-cake-card .cake-label {
-      position: absolute;
-      bottom: 0.75rem;
-      left: 0.75rem;
-      right: 0.75rem;
-      font-size: 11px;
-      color: rgba(255,255,255,0.7);
-      letter-spacing: 0.03em;
-    }
-
-    .hero-badge {
-      position: absolute;
-      top: 2.5rem;
-      right: 2.5rem;
-      background: var(--gold);
-      color: var(--dark);
-      border-radius: 50%;
-      width: 80px;
-      height: 80px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      font-weight: 500;
-      text-align: center;
-      letter-spacing: 0.05em;
-      line-height: 1.3;
-      text-transform: uppercase;
-    }
-
-    /* ── NAV ─────────────────────────────── */
-    .top-nav {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1.5rem 4rem;
+      position: fixed;
+      top: 0; bottom: 0; left: 0;
       z-index: 10;
     }
-
-    .nav-logo {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.4rem;
-      font-weight: 400;
-      color: #fff;
-      text-decoration: none;
-      letter-spacing: 0.02em;
-    }
-    .nav-logo span { color: var(--rose); font-style: italic; }
-
-    .nav-links {
-      display: flex;
-      gap: 2rem;
-      list-style: none;
-    }
-    .nav-links a {
-      font-size: 12px;
-      color: rgba(255,255,255,0.5);
-      text-decoration: none;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      transition: color 0.15s;
-    }
-    .nav-links a:hover { color: #fff; }
-
-    /* ── CAT STRIP ───────────────────────── */
-    .cat-strip {
-      background: var(--white);
+    .side-header {
+      padding: 2.5rem 1.5rem;
       border-bottom: 1px solid var(--border);
-      padding: 0 3rem;
+      text-align: center;
+    }
+    .side-header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.8rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: var(--brown);
+    }
+    .side-header p {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+    nav {
+      flex: 1;
+      padding: 1.5rem 1rem;
+    }
+    nav a {
       display: flex;
       align-items: center;
-      gap: 0;
-      overflow-x: auto;
-      scrollbar-width: none;
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      box-shadow: 0 2px 12px rgba(43,27,23,0.06);
-    }
-    .cat-strip::-webkit-scrollbar { display: none; }
-
-    .cat-tab {
-      padding: 1rem 1.25rem;
-      font-size: 12px;
-      font-family: 'Jost', sans-serif;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      gap: 0.8rem;
+      padding: 0.8rem 1rem;
       color: var(--muted);
-      border: none;
-      background: none;
-      cursor: pointer;
-      white-space: nowrap;
-      border-bottom: 2px solid transparent;
-      transition: all 0.15s;
+      text-decoration: none;
+      border-radius: 8px;
       font-weight: 400;
-    }
-    .cat-tab:hover { color: var(--dark); }
-    .cat-tab.active { color: var(--rose); border-bottom-color: var(--rose); font-weight: 500; }
-
-    /* ── CATALOG SECTION ─────────────────── */
-    .catalog {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 4rem 3rem;
-    }
-
-    .catalog-header {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      margin-bottom: 2.5rem;
-    }
-
-    .catalog-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 2.5rem;
-      font-weight: 300;
-    }
-    .catalog-title em { font-style: italic; color: var(--rose); }
-
-    .catalog-count {
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    /* ── PRODUCT GRID ─────────────────────── */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1.5rem;
-    }
-
-    .p-card {
-      background: var(--white);
-      border-radius: 20px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      cursor: pointer;
-      transition: transform 0.25s, box-shadow 0.25s;
-      position: relative;
-    }
-    .p-card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 20px 48px rgba(43,27,23,0.12);
-    }
-
-    .p-card-img {
-      aspect-ratio: 4/3;
-      background: var(--cream2);
-      overflow: hidden;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 4rem;
-    }
-    .p-card-img img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.4s ease;
-    }
-    .p-card:hover .p-card-img img { transform: scale(1.06); }
-
-    .p-card-tag {
-      position: absolute;
-      top: 0.75rem;
-      left: 0.75rem;
-      background: rgba(43,27,23,0.75);
-      color: #fff;
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 4px 10px;
-      border-radius: 20px;
-      backdrop-filter: blur(4px);
-    }
-
-    .p-card-body { padding: 1.25rem 1.5rem 1.5rem; }
-
-    .p-card-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.3rem;
-      font-weight: 400;
-      line-height: 1.2;
       margin-bottom: 0.5rem;
+      transition: all 0.2s ease;
     }
-
-    .p-card-desc {
-      font-size: 13px;
-      color: var(--muted);
-      line-height: 1.6;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+    nav a:hover, nav a.active {
+      background-color: var(--rose-pale);
+      color: var(--brown);
+      font-weight: 500;
     }
-
-    .p-card-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 1rem;
-      padding-top: 0.9rem;
+    nav a i { font-size: 1.3rem; }
+    .side-footer {
+      padding: 1.5rem;
       border-top: 1px solid var(--border);
     }
-
-    .p-card-price {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.4rem;
-      font-weight: 600;
-      color: var(--rose);
-    }
-
-    .p-card-order {
-      background: var(--dark);
-      color: #fff;
-      border: none;
-      border-radius: 30px;
-      padding: 7px 16px;
-      font-size: 11px;
-      font-family: 'Jost', sans-serif;
-      letter-spacing: 0.06em;
-      cursor: pointer;
-      text-transform: uppercase;
-      transition: background 0.15s;
-    }
-    .p-card-order:hover { background: var(--rose); }
-
-    /* ── EMPTY ── */
-    .empty {
-      grid-column: 1 / -1;
-      text-align: center;
-      padding: 6rem 2rem;
-      color: var(--muted);
-    }
-    .empty-icon { font-size: 3.5rem; display: block; margin-bottom: 1rem; }
-    .empty p { font-size: 15px; }
-
-    /* ── MODAL ── */
-    .modal-bg {
-      position: fixed;
-      inset: 0;
-      background: rgba(43,27,23,0.7);
-      z-index: 200;
-      display: none;
+    .btn-logout {
+      display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-      backdrop-filter: blur(4px);
-    }
-    .modal-bg.open { display: flex; }
-
-    .modal-box {
-      background: var(--white);
-      border-radius: 24px;
-      max-width: 560px;
+      gap: 0.5rem;
       width: 100%;
-      overflow: hidden;
-      animation: popUp 0.28s cubic-bezier(.34,1.56,.64,1);
-      position: relative;
-    }
-    @keyframes popUp {
-      from { transform: scale(0.88) translateY(20px); opacity: 0; }
-      to   { transform: scale(1) translateY(0); opacity: 1; }
-    }
-
-    .modal-img {
-      aspect-ratio: 16/9;
-      background: var(--cream2);
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 5rem;
-    }
-    .modal-img img { width: 100%; height: 100%; object-fit: cover; }
-
-    .modal-content { padding: 2rem 2.25rem 2.25rem; }
-
-    .modal-cat {
-      font-size: 10px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
+      padding: 0.7rem;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
       color: var(--rose);
-      margin-bottom: 0.5rem;
+      cursor: pointer;
+      justify-content: center;
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: background 0.2s;
     }
+    .btn-logout:hover { background-color: #FFF0F2; }
 
-    .modal-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 2rem;
-      font-weight: 400;
-      line-height: 1.15;
-      margin-bottom: 1rem;
+    /* ── MAIN CONTENT ── */
+    main {
+      margin-left: 260px;
+      flex: 1;
+      padding: 2.5rem;
+      max-width: 1400px;
     }
-
-    .modal-desc {
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.7;
-      margin-bottom: 1.5rem;
-    }
-
-    .modal-row {
+    header {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 1rem;
+      align-items: center;
+      margin-bottom: 2.5rem;
     }
-
-    .modal-price {
+    h2 {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 2rem;
-      font-weight: 600;
-      color: var(--rose);
-    }
-
-    .modal-cta {
-      background: var(--rose);
-      color: #fff;
-      border: none;
-      border-radius: 40px;
-      padding: 12px 28px;
-      font-family: 'Jost', sans-serif;
-      font-size: 13px;
+      font-size: 2.2rem;
+      color: var(--brown);
       font-weight: 400;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      transition: background 0.15s;
     }
-    .modal-cta:hover { background: #b5636d; }
-
-    .modal-close {
-      position: absolute;
-      top: 1rem; right: 1rem;
-      background: rgba(43,27,23,0.5);
+    .btn-primary {
+      background-color: var(--brown);
+      color: var(--white);
       border: none;
-      color: #fff;
-      border-radius: 50%;
-      width: 34px; height: 34px;
-      font-size: 16px;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.95rem;
       cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: center;
-      transition: background 0.15s;
-      z-index: 5;
+      gap: 0.5rem;
+      box-shadow: 0 4px 6px rgba(122,79,58,0.1);
+      transition: background 0.2s;
     }
-    .modal-close:hover { background: rgba(43,27,23,0.8); }
+    .btn-primary:hover { background-color: #633f2e; }
 
-    /* ── FEATURES STRIP ─────────────────── */
-    .features {
-      background: var(--dark);
-      padding: 3.5rem 3rem;
+    /* ── STATS GRID ── */
+    .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 2rem;
-      text-align: center;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
     }
-
-    .feature-item {
-      color: rgba(255,255,255,0.7);
-    }
-    .feature-icon { font-size: 2rem; display: block; margin-bottom: 0.75rem; }
-    .feature-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.15rem;
-      color: #fff;
-      margin-bottom: 0.4rem;
-    }
-    .feature-desc { font-size: 12px; line-height: 1.6; }
-
-    /* ── FOOTER ─────────────────────────── */
-    footer {
-      background: var(--dark);
-      border-top: 1px solid rgba(255,255,255,0.06);
-      padding: 2.5rem 4rem;
+    .stat-card {
+      background-color: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
       gap: 1rem;
     }
-
-    .footer-logo {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.25rem;
-      color: #fff;
-    }
-    .footer-logo span { color: var(--rose); font-style: italic; }
-
-    footer p {
-      font-size: 12px;
-      color: rgba(255,255,255,0.35);
-    }
-
-    .footer-social {
-      display: flex;
-      gap: 12px;
-    }
-    .footer-social a {
-      font-size: 11px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.4);
-      text-decoration: none;
-      transition: color 0.15s;
-    }
-    .footer-social a:hover { color: var(--rose); }
-
-    /* ── ADMIN FLOAT ─── */
-    .admin-float {
-      position: fixed;
-      bottom: 1.5rem; right: 1.5rem;
-      background: var(--dark);
-      color: rgba(255,255,255,0.6);
-      border: none;
-      border-radius: 40px;
-      padding: 9px 18px;
-      font-size: 11px;
-      font-family: 'Jost', sans-serif;
-      cursor: pointer;
-      text-decoration: none;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      opacity: 0.5;
-      transition: opacity 0.15s;
-      z-index: 100;
-    }
-    .admin-float:hover { opacity: 1; }
-
-    /* ── LOADING ─── */
-    .loading {
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      background-color: var(--rose-pale);
+      color: var(--rose);
       display: flex;
       align-items: center;
       justify-content: center;
-      grid-column: 1 / -1;
-      padding: 4rem;
-      gap: 8px;
-      color: var(--muted);
-      font-size: 14px;
+      font-size: 1.5rem;
     }
-    .dot-spin {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--rose);
-      animation: pulse 1s ease-in-out infinite;
-    }
-    @keyframes pulse { 0%,100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1); } }
+    .stat-card:nth-child(2) .stat-icon { background-color: #EBF3FE; color: #3B82F6; }
+    .stat-card:nth-child(3) .stat-icon { background-color: #E6F7ED; color: #10B981; }
+    .stat-info .stat-val { font-size: 1.8rem; font-weight: 500; color: var(--dark); line-height: 1.2; }
+    .stat-info .stat-lbl { font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
 
-    /* ── RESPONSIVE ─── */
-    @media (max-width: 768px) {
-      .hero { grid-template-columns: 1fr; min-height: auto; }
-      .hero-visual { display: none; }
-      .hero-text { padding: 7rem 2rem 4rem; }
-      .top-nav { padding: 1.25rem 2rem; }
-      .nav-links { display: none; }
-      .cat-strip { padding: 0 1rem; }
-      .catalog { padding: 2.5rem 1.25rem; }
-      footer { padding: 2rem 1.5rem; flex-direction: column; align-items: flex-start; }
-      .features { padding: 3rem 1.5rem; }
+    /* ── SPLIT VIEW ── */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+    }
+    .section-card {
+      background-color: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      color: var(--brown);
+      margin-bottom: 1.2rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+
+    /* ── TABLE / LIST ── */
+    .table-wrapper { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { padding: 0.8rem 1rem; color: var(--muted); font-weight: 500; font-size: 0.85rem; text-transform: uppercase; border-bottom: 2px solid var(--border); }
+    td { padding: 1rem; border-bottom: 1px solid var(--border); font-size: 0.95rem; vertical-align: middle; }
+    .td-img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; background-color: var(--bg); }
+    .badge { padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500; display: inline-block; }
+    .badge-published { background-color: #E6F7ED; color: #10B981; }
+    .badge-scheduled { background-color: #FFF7ED; color: #F97316; }
+    .actions-cell { display: flex; gap: 0.5rem; }
+    .btn-icon { background: none; border: 1px solid var(--border); width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); transition: all 0.2s; }
+    .btn-icon:hover { border-color: var(--muted); color: var(--dark); }
+    .btn-delete:hover { border-color: var(--rose); color: var(--rose); background-color: #FFF0F2; }
+
+    /* ── ACTIVITY FEED ── */
+    .act-row { display: flex; gap: 1rem; margin-bottom: 1.2rem; align-items: flex-start; }
+    .act-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 0.4rem; flex-shrink: 0; }
+    .dot-ok { background-color: #10B981; box-shadow: 0 0 0 3px #E6F7ED; }
+    .dot-err { background-color: #EF4444; box-shadow: 0 0 0 3px #FEE2E2; }
+    .act-text { font-size: 0.9rem; color: var(--dark); line-height: 1.4; }
+    .act-time { font-size: 0.75rem; color: var(--muted); margin-top: 0.1rem; }
+
+    /* ── MODAL / DRAWER ── */
+    .modal-overlay { position: fixed; top: 0; bottom: 0; left: 0; right: 0; background-color: rgba(43,27,23,0.4); display: flex; justify-content: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 100; }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal-content { width: 460px; background-color: var(--white); height: 100%; box-shadow: -4px 0 24px rgba(0,0,0,0.1); transform: translateX(100%); transition: transform 0.3s ease; display: flex; flex-direction: column; }
+    .modal-overlay.open .modal-content { transform: translateX(0); }
+    .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 1.5rem; flex: 1; overflow-y: auto; }
+    .modal-footer { padding: 1.2rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.8rem; background-color: var(--cream); }
+    
+    /* ── FORMS ── */
+    .form-group { margin-bottom: 1.2rem; }
+    .form-group label { display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 0.4rem; color: var(--dark); }
+    .form-control { width: 100%; padding: 0.65rem 0.8rem; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 0.95rem; color: var(--dark); transition: border 0.2s; }
+    .form-control:focus { outline: none; border-color: var(--brown); }
+    textarea.form-control { resize: vertical; min-height: 80px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    
+    /* Checkbox de Redes Sociales */
+    .networks-box {
+      display: flex;
+      gap: 1.5rem;
+      background-color: var(--bg);
+      padding: 0.8rem;
+      border-radius: 8px;
+      border: 1px dashed var(--border);
+    }
+    .net-option {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .net-option input {
+      cursor: pointer;
+      width: 16px;
+      height: 16px;
+      accent-color: var(--brown);
+    }
+    .net-option i {
+      font-size: 1.1rem;
+    }
+
+    /* Img preview */
+    .preview-zone { margin-top: 0.5rem; border: 1px dashed var(--border); border-radius: 6px; padding: 0.5rem; text-align: center; background-color: var(--bg); position: relative; min-height: 100px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .preview-zone img { max-width: 100%; max-height: 180px; border-radius: 4px; object-fit: contain; }
+
+    /* ── TOAST ── */
+    .toast { position: fixed; bottom: 2rem; right: 2rem; background-color: var(--dark); color: var(--white); padding: 0.8rem 1.5rem; border-radius: 8px; font-size: 0.95rem; transform: translateY(150%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 200; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 0.5rem; }
+    .toast.show { transform: translateY(0); }
+    .toast-err { background-color: #EF4444; }
+
+    @media (max-width: 960px) {
+      .dashboard-layout { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-<!-- ── HERO ─────────────────────────── -->
-<section class="hero">
-  <nav class="top-nav">
-    <a class="nav-logo" href="#"><span>Dulce</span> Atelier</a>
-    <ul class="nav-links">
-      <li><a href="#catalogo">Catálogo</a></li>
-      <li><a href="#nosotros">Artesanal</a></li>
-      <li><a href="#contacto">Pedidos</a></li>
-    </ul>
-  </nav>
-
-  <div class="hero-text">
-    <div class="hero-eyebrow">Pastelería artesanal temática</div>
-    <h1>
-      Creamos dulces<br/>
-      <em>únicos</em> para tus<br/>
-      momentos especiales
-    </h1>
-    <p class="hero-desc">
-      Tartas, bollos y dulces personalizados hechos con amor y técnica profesional.
-      Cada pieza es una obra de arte comestible.
-    </p>
-    <div class="hero-actions">
-      <a class="btn-rose" href="#catalogo">Ver catálogo</a>
-      <a class="btn-ghost" href="#contacto">Hacer un pedido</a>
+  <aside>
+    <div class="side-header">
+      <h1>Dulce Atelier</h1>
+      <p>Panel de Control</p>
     </div>
-  </div>
-
-  <div class="hero-visual">
-    <div class="hero-badge">100%<br/>Casero</div>
-    <div class="hero-cake-grid">
-      <div class="hero-cake-card">🎂<div class="cake-label">Tartas temáticas</div></div>
-      <div class="hero-cake-card">🥐<div class="cake-label">Bollos artesanos</div></div>
-      <div class="hero-cake-card">🍰<div class="cake-label">Porciones</div></div>
+    <nav>
+      <a href="#" class="active"><i class="ti ti-layout-dashboard"></i> Catálogo de Platos</a>
+      <a href="/"><i class="ti ti-external-link"></i> Ver Sitio Web</a>
+    </nav>
+    <div class="side-footer">
+      <button class="btn-logout" onclick="logout()"><i class="ti ti-logout"></i> Cerrar Sesión</button>
     </div>
-  </div>
-</section>
+  </aside>
 
-<!-- ── FEATURES ───────────────────── -->
-<div class="features" id="nosotros">
-  <div class="feature-item">
-    <span class="feature-icon">🧁</span>
-    <div class="feature-title">100% Artesanal</div>
-    <p class="feature-desc">Elaborado a mano con ingredientes seleccionados, sin conservantes ni colorantes artificiales.</p>
-  </div>
-  <div class="feature-item">
-    <span class="feature-icon">🎨</span>
-    <div class="feature-title">Diseño Personalizado</div>
-    <p class="feature-desc">Cada creación es única. Adaptamos los diseños temáticos a tu evento o petición.</p>
-  </div>
-  <div class="feature-item">
-    <span class="feature-icon">⭐</span>
-    <div class="feature-title">Calidad Profesional</div>
-    <p class="feature-desc">Técnica pastelera profesional en cada detalle, desde el bizcocho hasta la decoración final.</p>
-  </div>
-  <div class="feature-item">
-    <span class="feature-icon">📦</span>
-    <div class="feature-title">Pedidos a Medida</div>
-    <p class="feature-desc">Contacta con nosotros para pedir tu creación personalizada con antelación.</p>
-  </div>
-</div>
+  <main>
+    <header>
+      <div>
+        <h2>Gestión del Catálogo</h2>
+        <p style="color: var(--muted); font-size: 0.95rem;">Añade, edita o programa las publicaciones de tus creaciones artesanales.</p>
+      </div>
+      <button class="btn-primary" onclick="openCreateModal()">
+        <i class="ti ti-plus"></i> Nuevo Plato
+      </button>
+    </header>
 
-<!-- ── CATALOG ────────────────────── -->
-<div class="cat-strip" id="catalogo">
-  <button class="cat-tab active" data-cat="all">Todo</button>
-</div>
-
-<section class="catalog">
-  <div class="catalog-header">
-    <h2 class="catalog-title">Nuestros <em>dulces</em></h2>
-    <span class="catalog-count" id="count"></span>
-  </div>
-  <div class="grid" id="grid">
-    <div class="loading"><div class="dot-spin"></div> Cargando creaciones...</div>
-  </div>
-</section>
-
-<!-- ── CONTACTO ───────────────────── -->
-<section id="contacto" style="background:var(--rose-pale);padding:4rem 3rem;text-align:center">
-  <p style="font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--rose);margin-bottom:0.75rem">Pedidos personalizados</p>
-  <h2 style="font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:300;margin-bottom:1rem">¿Tienes algo especial en mente?</h2>
-  <p style="font-size:14px;color:var(--muted);max-width:480px;margin:0 auto 2rem;line-height:1.7">Cuéntanos tu idea y lo hacemos realidad. Tartas de cumpleaños, bautizos, comuniones, bodas o simplemente porque sí.</p>
-  <a href="mailto:hola@dulceatelier.es" class="btn-rose" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none">
-    ✉️ Escríbenos
-  </a>
-</section>
-
-<!-- ── FOOTER ─────────────────────── -->
-<footer>
-  <div class="footer-logo"><span>Dulce</span> Atelier</div>
-  <p>© 2026 · Pastelería artesanal temática · Hecho con amor</p>
-  <div class="footer-social">
-    <a href="#">Instagram</a>
-    <a href="#">Facebook</a>
-    <a href="#">TikTok</a>
-    <a href="#">X</a>
-  </div>
-</footer>
-
-<a href="./admin.html" class="admin-float">⚙ Admin</a>
-
-<!-- ── MODAL ── -->
-<div class="modal-bg" id="modal" onclick="maybeClose(event)">
-  <div class="modal-box" id="modal-box">
-    <button class="modal-close" onclick="closeModal()">✕</button>
-    <div class="modal-img" id="modal-img"></div>
-    <div class="modal-content">
-      <div class="modal-cat" id="modal-cat"></div>
-      <div class="modal-name" id="modal-name"></div>
-      <div class="modal-desc" id="modal-desc"></div>
-      <div class="modal-row">
-        <div class="modal-price" id="modal-price"></div>
-        <button class="modal-cta" onclick="closeModal()">Consultar pedido</button>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon"><i class="ti ti-cake"></i></div>
+        <div class="stat-info">
+          <div class="stat-val" id="st-total">0</div>
+          <div class="stat-lbl">Total Platos</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><i class="ti ti-calendar-event"></i></div>
+        <div class="stat-info">
+          <div class="stat-val" id="st-sched">0</div>
+          <div class="stat-lbl">Programados</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><i class="ti ti-chart-bar"></i></div>
+        <div class="stat-info">
+          <div class="stat-val" id="st-month">0</div>
+          <div class="stat-lbl">Este Mes</div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-<script>
-let allProducts = [];
-
-async function load() {
-  try {
-    const res  = await fetch('/api/products?limit=100');
-    const data = await res.json();
-    allProducts = data.products || [];
-    buildCatNav();
-    render(allProducts);
-  } catch {
-    document.getElementById('grid').innerHTML =
-      '<div class="empty"><span class="empty-icon">🎂</span><p>No se pudo cargar el catálogo. Inténtalo más tarde.</p></div>';
-  }
-}
-
-function buildCatNav() {
-  const cats = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
-  const nav  = document.querySelector('.cat-strip');
-  cats.forEach(cat => {
-    const btn = document.createElement('button');
-    btn.className   = 'cat-tab';
-    btn.dataset.cat = cat;
-    btn.textContent = cat;
-    btn.onclick     = () => selectCat(cat);
-    nav.appendChild(btn);
-  });
-}
-
-function selectCat(cat) {
-  document.querySelectorAll('.cat-tab').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
-  const filtered = cat === 'all' ? allProducts : allProducts.filter(p => p.category === cat);
-  render(filtered);
-}
-
-document.querySelector('[data-cat="all"]').onclick = () => selectCat('all');
-
-function render(products) {
-  const g = document.getElementById('grid');
-  document.getElementById('count').textContent =
-    products.length ? `${products.length} creación${products.length !== 1 ? 'es' : ''}` : '';
-
-  if (!products.length) {
-    g.innerHTML = '<div class="empty"><span class="empty-icon">🧁</span><p>Pronto añadiremos nuevas creaciones.</p></div>';
-    return;
-  }
-
-  g.innerHTML = products.map((p, i) => {
-    const img  = p.images?.[0]
-      ? `<img src="${p.images[0]}" alt="${p.name}" loading="lazy" />`
-      : randomEmoji();
-    return `
-      <article class="p-card" style="animation-delay:${i * 0.05}s" onclick='openModal(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
-        <div class="p-card-img">
-          ${p.category ? `<div class="p-card-tag">${p.category}</div>` : ''}
-          ${img}
+    <div class="dashboard-layout">
+      <div class="section-card">
+        <h3 class="section-title">Platos en el Menú</h3>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Imagen</th>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>Precio</th>
+                <th>Estado</th>
+                <th style="text-align: right;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="products-tbody">
+              <tr>
+                <td colspan="6" style="text-align: center; color: var(--muted); padding: 2rem;">Cargando catálogo...</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div class="p-card-body">
-          <div class="p-card-name">${p.name}</div>
-          ${p.description ? `<div class="p-card-desc">${p.description}</div>` : ''}
-          <div class="p-card-footer">
-            <div class="p-card-price">${p.price || ''}</div>
-            <button class="p-card-order" onclick="event.stopPropagation()">Pedir</button>
+      </div>
+
+      <div class="section-card">
+        <h3 class="section-title">Historial de Redes</h3>
+        <div id="activity-list">
+          <div style="color: var(--muted); font-size: 0.9rem; text-align: center; padding: 1rem;">Sin actividad reciente.</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="modal" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 id="modal-title" style="font-family:'Cormorant Garamond',serif; font-size:1.6rem; color:var(--brown)">Nuevo Plato</h3>
+        <button class="btn-icon" onclick="closeModal(force=true)"><i class="ti ti-x"></i></button>
+      </div>
+      <form id="product-form" onsubmit="handleSubmit(event)">
+        <input type="hidden" id="f-id" />
+        <div class="modal-body">
+          
+          <div class="form-group">
+            <label for="f-name">Nombre del Plato / Postre *</label>
+            <input type="text" id="f-name" class="form-control" required placeholder="Ej. Tarta de Comunión Floral" />
           </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f-category">Categoría</label>
+              <input type="text" id="f-category" class="form-control" placeholder="Ej. Tartas, Cupcakes" />
+            </div>
+            <div class="form-group">
+              <label for="f-price">Precio visible</label>
+              <input type="text" id="f-price" class="form-control" placeholder="Ej. 45€ o Por encargo" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="f-description">Descripción / Ingredientes</label>
+            <textarea id="f-description" class="form-control" placeholder="Describe los detalles, sabores o raciones..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Publicar automáticamente en:</label>
+            <div class="networks-box">
+              <label class="net-option">
+                <input type="checkbox" name="networks" value="telegram" checked />
+                <i class="ti ti-brand-telegram" style="color: #26A5E4;"></i> Telegram
+              </label>
+              <label class="net-option">
+                <input type="checkbox" name="networks" value="instagram" />
+                <i class="ti ti-brand-instagram" style="color: #E1306C;"></i> Instagram
+              </label>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="f-status">Estado de publicación</label>
+              <select id="f-status" class="form-control" onchange="toggleScheduledZone()">
+                <option value="published">Publicar ahora mismo</option>
+                <option value="scheduled">Programar para más tarde</option>
+              </select>
+            </div>
+            <div class="form-group" id="sched-zone" style="display: none;">
+              <label for="f-scheduled">Fecha y hora *</label>
+              <input type="datetime-local" id="f-scheduled" class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Fotografía del Plato *</label>
+            <input type="file" id="f-file" accept="image/*" style="display: none;" onchange="handleFileChange(event)" />
+            <button type="button" class="btn-control" style="width:100%; padding:0.6rem; border:1px solid var(--border); background:#FFF; border-radius:6px; cursor:pointer; font-family:inherit" onclick="document.getElementById('f-file').click()">
+              <i class="ti ti-photo"></i> Seleccionar Imagen
+            </button>
+            <div class="preview-zone" id="p-zone">
+              <span style="color: var(--muted); font-size:0.85rem">Ninguna imagen seleccionada</span>
+            </div>
+          </div>
+
         </div>
-      </article>`;
-  }).join('');
-}
+        <div class="modal-footer">
+          <button type="button" class="btn-control" style="background:none; border:none; cursor:pointer; font-family:inherit; color:var(--muted)" onclick="closeModal(force=true)">Cancelar</button>
+          <button type="submit" class="btn-primary" id="btn-submit">Guardar y Publicar</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-function randomEmoji() {
-  const e = ['🎂','🧁','🍰','🥐','🍩','🍪','🥧','🍮'];
-  return `<span style="font-size:3.5rem">${e[Math.floor(Math.random()*e.length)]}</span>`;
-}
+  <div class="toast" id="toast"><i class="ti ti-circle-check"></i> <span id="toast-txt">Operación realizada</span></div>
 
-function openModal(p) {
-  document.getElementById('modal-img').innerHTML = p.images?.[0]
-    ? `<img src="${p.images[0]}" alt="${p.name}" />`
-    : randomEmoji();
-  document.getElementById('modal-cat').textContent  = p.category || '';
-  document.getElementById('modal-name').textContent = p.name;
-  document.getElementById('modal-desc').textContent = p.description || 'Creación artesanal hecha con ingredientes seleccionados.';
-  document.getElementById('modal-price').textContent = p.price || '';
-  document.getElementById('modal').classList.add('open');
-}
+  <script>
+    // Variables globales de estado local
+    const S = { products: [], activities: [] };
+    let currentImgBase64 = null;
 
-function closeModal() {
-  document.getElementById('modal').classList.remove('open');
-}
+    document.addEventListener('DOMContentLoaded', () => {
+      checkAuth();
+      loadData();
+    });
 
-function maybeClose(e) {
-  if (e.target === document.getElementById('modal')) closeModal();
-}
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (!res.ok) window.location.href = '/login.html';
+      } catch {
+        window.location.href = '/login.html';
+      }
+    }
 
-load();
-</script>
+    async function logout() {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/login.html';
+    }
+
+    async function loadData() {
+      try {
+        const res = await fetch('/api/products');
+        if (!res.ok) return;
+        S.products = await res.json();
+        renderProducts();
+        updateStats();
+      } catch (err) {
+        showToast('Error al conectar con la base de datos', true);
+      }
+    }
+
+    function renderProducts() {
+      const tbody = document.getElementById('products-tbody');
+      if (!S.products.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:2rem;">El catálogo está vacío. ¡Crea tu primer plato!</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = S.products.map(p => {
+        const img = p.images && p.images[0] 
+          ? `<img src="${p.images[0]}" class="td-img" alt=""/>` 
+          : `<div class="td-img" style="display:flex; align-items:center; justify-content:center; font-size:1.5rem">🧁</div>`;
+        
+        const isSched = p.status === 'scheduled';
+        const badge = isSched 
+          ? `<span class="badge badge-scheduled"><i class="ti ti-clock"></i> Programado</span>`
+          : `<span class="badge badge-published"><i class="ti ti-circle-check"></i> Activo</span>`;
+
+        return `
+          <tr>
+            <td>${img}</td>
+            <td style="font-weight:500; color:var(--dark)">${p.name}</td>
+            <td><span style="color:var(--muted); font-size:0.9rem">${p.category || '—'}</span></td>
+            <td style="font-weight:500">${p.price || '—'}</td>
+            <td>${badge}</td>
+            <td>
+              <div class="actions-cell" style="justify-content: flex-end;">
+                <button class="btn-icon" onclick="openEditModal('${p.id}')" title="Editar"><i class="ti ti-edit"></i></button>
+                <button class="btn-icon btn-delete" onclick="deleteProduct('${p.id}')" title="Eliminar"><i class="ti ti-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function toggleScheduledZone() {
+      const val = document.getElementById('f-status').value;
+      const zone = document.getElementById('sched-zone');
+      const btn = document.getElementById('btn-submit');
+      if (val === 'scheduled') {
+        zone.style.display = 'block';
+        document.getElementById('f-scheduled').required = true;
+        btn.innerHTML = `<i class="ti ti-calendar"></i> Programar Plato`;
+      } else {
+        zone.style.display = 'none';
+        document.getElementById('f-scheduled').required = false;
+        btn.innerHTML = `<i class="ti ti-cloud-upload"></i> Guardar y Publicar`;
+      }
+    }
+
+    function handleFileChange(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      if (file.size > 15 * 1024 * 1024) {
+        showToast('La imagen no puede superar los 15MB', true);
+        e.target.value = '';
+        return;
+      }
+
+      const r = new FileReader();
+      r.onload = function(evt) {
+        currentImgBase64 = evt.target.result;
+        document.getElementById('p-zone').innerHTML = `<img src="${currentImgBase64}" alt="Preview" />`;
+      };
+      r.readAsDataURL(file);
+    }
+
+    function openCreateModal() {
+      document.getElementById('product-form').reset();
+      document.getElementById('f-id').value = '';
+      currentImgBase64 = null;
+      document.getElementById('p-zone').innerHTML = `<span style="color: var(--muted); font-size:0.85rem">Ninguna imagen seleccionada</span>`;
+      document.getElementById('modal-title').textContent = 'Nuevo Plato Artesanal';
+      toggleScheduledZone();
+      document.getElementById('modal').classList.add('open');
+    }
+
+    function openEditModal(id) {
+      const p = S.products.find(x => x.id === id);
+      if (!p) return;
+
+      document.getElementById('f-id').value = p.id;
+      document.getElementById('f-name').value = p.name;
+      document.getElementById('f-category').value = p.category || '';
+      document.getElementById('f-price').value = p.price || '';
+      document.getElementById('f-description').value = p.description || '';
+      document.getElementById('f-status').value = p.status || 'published';
+
+      if (p.status === 'scheduled' && p.scheduled_at) {
+        // Formatear ISO a YYYY-MM-DDTHH:MM
+        document.getElementById('f-scheduled').value = p.scheduled_at.slice(0, 16);
+      }
+
+      if (p.images && p.images[0]) {
+        currentImgBase64 = p.images[0];
+        document.getElementById('p-zone').innerHTML = `<img src="${currentImgBase64}" alt="Preview" />`;
+      } else {
+        currentImgBase64 = null;
+        document.getElementById('p-zone').innerHTML = `<span style="color: var(--muted); font-size:0.85rem">Sin imagen</span>`;
+      }
+
+      document.getElementById('modal-title').textContent = 'Editar Datos del Plato';
+      toggleScheduledZone();
+      document.getElementById('modal').classList.add('open');
+    }
+
+    function closeModal(e, force = false) {
+      if (force || e.target.classList.contains('modal-overlay')) {
+        document.getElementById('modal').classList.remove('open');
+      }
+    }
+
+    // ENVÍO DE DATOS AL BACKEND
+    async function handleSubmit(e) {
+      e.preventDefault();
+      
+      const id = document.getElementById('f-id').value;
+      const status = document.getElementById('f-status').value;
+      
+      // Recopilamos las redes sociales seleccionadas por el usuario
+      const selectedNetworks = [];
+      document.querySelectorAll('input[name="networks"]:checked').forEach(cb => {
+        selectedNetworks.push(cb.value);
+      });
+
+      const payload = {
+        name: document.getElementById('f-name').value.trim(),
+        category: document.getElementById('f-category').value.trim(),
+        price: document.getElementById('f-price').value.trim(),
+        description: document.getElementById('f-description').value.trim(),
+        status: status,
+        scheduled_at: status === 'scheduled' ? new Date(document.getElementById('f-scheduled').value).toISOString() : null,
+        images: currentImgBase64 ? [currentImgBase64] : [],
+        networks: selectedNetworks // Enviamos las redes al servidor (Telegram / Instagram)
+      };
+
+      const url = id ? `/api/products/${id}` : '/api/products';
+      const method = id ? 'PUT' : 'POST';
+
+      try {
+        const res = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const resData = await res.json();
+
+        if (!res.ok) {
+          showToast(resData.error || 'Ocurrió un error al guardar', true);
+          return;
+        }
+
+        showToast(id ? '¡Plato actualizado con éxito!' : '¡Plato creado y orden de difusión enviada!');
+        document.getElementById('modal').classList.remove('open');
+        loadData();
+      } catch {
+        showToast('Fallo de conexión de red con Express', true);
+      }
+    }
+
+    async function deleteProduct(id) {
+      if (!confirm('¿Estás completamente seguro de eliminar este plato del catálogo?')) return;
+      try {
+        const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          showToast('Plato eliminado del catálogo');
+          loadData();
+        } else {
+          showToast('No se pudo eliminar el plato', true);
+        }
+      } catch {
+        showToast('Error de red', true);
+      }
+    }
+
+    async function updateStats() {
+      try {
+        const res  = await fetch('/api/stats');
+        const data = await res.json();
+        document.getElementById('st-total').textContent = data.totalProducts ?? S.products.length;
+        document.getElementById('st-month').textContent = data.thisMonth ?? '—';
+        document.getElementById('st-sched').textContent = data.scheduled ?? '—';
+        
+        const acts = data.recentActivity || [];
+        const al = document.getElementById('activity-list');
+        if (!acts.length && !S.activities.length) return;
+        
+        const combined = [...S.activities, ...acts];
+        al.innerHTML = combined.map(a => `
+          <div class="act-row">
+            <div class="act-dot dot-${a.type || 'ok'}"></div>
+            <div>
+              <div class="act-text">${a.text || (a.product_name + ' → ' + a.network)}</div>
+              <div class="act-time">${a.time || a.posted_at || ''}</div>
+            </div>
+          </div>`).join('');
+      } catch {
+        document.getElementById('st-total').textContent = S.products.length;
+        if (S.activities.length) {
+          document.getElementById('activity-list').innerHTML = S.activities.map(a => `
+            <div class="act-row">
+              <div class="act-dot dot-ok"></div>
+              <div><div class="act-text">${a.text}</div><div class="act-time">${a.time}</div></div>
+            </div>`).join('');
+        }
+      }
+    }
+
+    /* ── TOAST ALERT SYSTEM ── */
+    function showToast(msg, isErr = false) {
+      const t = document.getElementById('toast');
+      const txt = document.getElementById('toast-txt');
+      txt.textContent = msg;
+      
+      if (isErr) {
+        t.classList.add('toast-err');
+        t.querySelector('i').className = 'ti ti-circle-x';
+      } else {
+        t.classList.remove('toast-err');
+        t.querySelector('i').className = 'ti ti-circle-check';
+      }
+
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+  </script>
 </body>
 </html>
