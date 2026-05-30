@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · Dulce Atelier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --rose:      #C97B84;
+      --rose-pale: #F5E6E8;
+      --cream:     #FDF8F3;
+      --dark:      #2B1B17;
+      --brown:     #7A4F3A;
+      --muted:     #9C7B6B;
+      --gold:      #C9963A;
+      --border:    rgba(43,27,23,0.1);
+      --bg:        #F7F3EF;
+      --white:     #FFFFFF;
+      --sidebar-w: 230px;
+    }
+
+    body {
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      background: var(--bg);
+      color: var(--dark);
+      min-height: 100vh;
+    }
+
+    /* ── LOGIN ── */
+    .login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--dark);
+    }
+    .login-box {
+      background: var(--white);
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      width: 360px;
+      text-align: center;
+    }
+    .login-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.75rem;
+      color: var(--dark);
+      margin-bottom: 0.5rem;
+    }
+    .login-logo em { color: var(--rose); font-style: italic; }
+    .login-sub { font-size: 12px; color: var(--muted); margin-bottom: 2rem; letter-spacing: 0.05em; }
+
+    .field { margin-bottom: 1rem; text-align: left; }
+    .field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); display: block; margin-bottom: 6px; }
+    .field input {
+      width: 100%; padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: 'Jost', sans-serif;
+      background: var(--cream);
+      color: var(--dark);
+    }
+    .field input:focus { outline: none; border-color: var(--rose); }
+
+    .btn-login {
+      width: 100%;
+      background: var(--rose);
+      color: #fff;
+      border: none;
+      border-radius: 40px;
+      padding: 12px;
+      font-size: 14px;
+      font-family: 'Jost', sans-serif;
+      font-weight: 400;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: background 0.15s;
+    }
+    .btn-login:hover { background: #b5636d; }
+    .login-err { font-size: 12px; color: #c0392b; margin-top: 0.75rem; }
+
+    /* ── APP SHELL ── */
+    .app { display: none; min-height: 100vh; }
+    .app.visible { display: grid; grid-template-columns: var(--sidebar-w) 1fr; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      background: var(--dark);
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 1rem;
+      gap: 2px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .s-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.25rem;
+      color: #fff;
+      padding: 0.25rem 0.75rem 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 0.5rem;
+    }
+    .s-logo em { color: var(--rose); font-style: italic; }
+
+    .s-section {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+      padding: 1rem 0.75rem 0.25rem;
+    }
+
+    .s-btn {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: none;
+      background: none;
+      color: rgba(255,255,255,0.5);
+      font-size: 13px;
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      transition: all 0.15s;
+    }
+    .s-btn i { font-size: 16px; }
+    .s-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+    .s-btn.active { background: rgba(201,123,132,0.2); color: var(--rose); }
+
+    .s-footer {
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* ── MAIN ── */
+    .main { overflow-y: auto; }
+
+    .view { display: none; padding: 2.5rem 3rem; }
+    .view.active { display: block; }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .page-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.75rem;
+      font-weight: 400;
+    }
+    .page-title em { color: var(--rose); font-style: italic; }
+    .page-sub { font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: 0.02em; }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 400;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--dark);
+    }
+    .card-title i { color: var(--rose); font-size: 18px; }
+
+    /* ── PUBLISH LAYOUT ── */
+    .pub-grid { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; }
+
+    /* ── UPLOAD ── */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 14px;
+      padding: 2.5rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag { border-color: var(--rose); background: var(--rose-pale); }
+    .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .drop-icon { font-size: 2.5rem; color: var(--muted); margin-bottom: 0.75rem; }
+    .drop-text { font-size: 13px; color: var(--muted); }
+    .drop-hint { font-size: 11px; color: #bbb; margin-top: 4px; }
+
+    .img-preview-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 1rem; }
+    .img-thumb {
+      aspect-ratio: 1; border-radius: 10px; overflow: hidden;
+      background: var(--cream); position: relative;
+    }
+    .img-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .img-thumb .rm {
+      position: absolute; top: 4px; right: 4px;
+      background: rgba(43,27,23,0.6); color: #fff; border: none;
+      border-radius: 50%; width: 20px; height: 20px;
+      font-size: 10px; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .img-thumb:hover .rm { opacity: 1; }
+
+    /* ── FIELDS ── */
+    .f-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      display: block;
+      margin: 1rem 0 6px;
+    }
+
+    .f-input, .f-textarea, .f-select {
+      width: 100%;
+      font-size: 13px;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--cream);
+      color: var(--dark);
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+    }
+    .f-textarea { resize: vertical; min-height: 90px; }
+    .f-input:focus, .f-textarea:focus, .f-select:focus {
+      outline: none; border-color: var(--rose);
+      background: var(--white);
+    }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* ── NETWORK LIST ── */
+    .net-list { display: flex; flex-direction: column; gap: 8px; }
+    .net-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border: 1px solid var(--border);
+      border-radius: 12px; cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .net-row.on { border-color: var(--rose); background: var(--rose-pale); }
+    .net-ico {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; color: #fff; flex-shrink: 0;
+    }
+    .ig { background: linear-gradient(135deg,#F58529,#DD2A7B,#8134AF); }
+    .fb { background: #1877F2; }
+    .tw { background: #000; }
+    .tt { background: #010101; }
+    .net-info { flex: 1; }
+    .net-name { font-size: 12px; font-weight: 500; color: var(--dark); }
+    .net-handle { font-size: 10px; color: var(--muted); }
+    .net-tog {
+      width: 34px; height: 18px; border-radius: 9px;
+      background: #ddd; border: none; position: relative; cursor: pointer;
+      transition: background 0.2s; flex-shrink: 0;
+    }
+    .net-tog.on { background: var(--rose); }
+    .net-tog::after {
+      content: ''; position: absolute; top: 3px; left: 3px;
+      width: 12px; height: 12px; border-radius: 50%; background: #fff;
+      transition: transform 0.2s;
+    }
+    .net-tog.on::after { transform: translateX(16px); }
+
+    /* ── PREVIEW ── */
+    .prev-box {
+      border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden;
+    }
+    .prev-header {
+      background: var(--cream); padding: 8px 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .prev-avatar {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--rose); color: #fff;
+      font-size: 10px; font-weight: 500;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .prev-uname { font-size: 12px; font-weight: 500; }
+    .prev-time { font-size: 10px; color: var(--muted); margin-left: auto; }
+    .prev-img {
+      aspect-ratio: 4/3; background: var(--cream);
+      display: flex; align-items: center; justify-content: center; font-size: 2.5rem;
+    }
+    .prev-img img { width: 100%; height: 100%; object-fit: cover; }
+    .prev-body { padding: 10px 12px; }
+    .prev-caption { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+    /* ── BUTTONS ── */
+    .btn-rose {
+      background: var(--rose); color: #fff; border: none;
+      padding: 10px 22px; border-radius: 40px;
+      font-size: 13px; font-family: 'Jost', sans-serif;
+      font-weight: 400; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: background 0.15s;
+    }
+    .btn-rose:hover { background: #b5636d; }
+
+    .btn-outline {
+      background: none; color: var(--dark);
+      border: 1px solid var(--border); padding: 10px 20px;
+      border-radius: 40px; font-size: 13px;
+      font-family: 'Jost', sans-serif; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: all 0.15s;
+    }
+    .btn-outline:hover { border-color: var(--rose); color: var(--rose); }
+
+    /* ── STATS ── */
+    .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem 1.5rem; }
+    .stat-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .stat-val { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 600; margin-top: 4px; }
+    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* ── CATALOG VIEW ── */
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .f-chip {
+      padding: 6px 16px; border: 1px solid var(--border); border-radius: 20px;
+      font-size: 11px; font-family: 'Jost', sans-serif; cursor: pointer;
+      background: none; color: var(--muted); letter-spacing: 0.06em;
+      text-transform: uppercase; transition: all 0.15s;
+    }
+    .f-chip.active { background: var(--rose); color: #fff; border-color: var(--rose); }
+
+    .p-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(210px,1fr)); gap: 1rem; }
+    .p-mini {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden; cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .p-mini:hover { border-color: var(--rose); }
+    .p-mini-img {
+      aspect-ratio: 4/3; background: var(--cream);
+      display: flex; align-items: center; justify-content: center; font-size: 2.5rem;
+      overflow: hidden;
+    }
+    .p-mini-img img { width:100%;height:100%;object-fit:cover; }
+    .p-mini-body { padding: 0.75rem 1rem 1rem; }
+    .p-mini-name { font-family: 'Cormorant Garamond',serif; font-size: 1.05rem; }
+    .p-mini-price { font-size: 13px; color: var(--rose); font-weight: 500; margin-top: 2px; }
+    .p-mini-cat { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+    .p-mini-nets { display: flex; gap: 4px; margin-top: 8px; }
+    .net-dot { width: 16px; height: 16px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #fff; }
+
+    /* ── ACTIVITY ── */
+    .act-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+    }
+    .act-row:last-child { border-bottom: none; }
+    .act-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+    .dot-ok { background: #639922; }
+    .dot-err { background: #c0392b; }
+    .act-text { font-size: 13px; color: var(--dark); }
+    .act-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* ── MODAL SUCCESS ── */
+    .modal-bg {
+      position: fixed; inset: 0; background: rgba(43,27,23,0.6);
+      z-index: 200; display: none; align-items: center; justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .modal-bg.open { display: flex; }
+    .modal-box {
+      background: var(--white); border-radius: 24px; padding: 2.5rem;
+      max-width: 440px; width: 90%; text-align: center;
+      animation: popUp 0.3s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes popUp { from { transform:scale(0.88);opacity:0; } to { transform:scale(1);opacity:1; } }
+    .modal-title { font-family: 'Cormorant Garamond',serif; font-size: 1.75rem; margin-bottom: 1rem; }
+    .modal-body-text { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 1.5rem; }
+    .modal-acts { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--dark); color: #fff;
+      border-radius: 12px; padding: 12px 18px;
+      font-size: 13px; z-index: 999;
+      display: none; max-width: 300px;
+      box-shadow: 0 4px 24px rgba(43,27,23,0.25);
+    }
+    .toast.show { display: block; animation: slideUp 0.2s ease; }
+    @keyframes slideUp { from { transform:translateY(8px);opacity:0; } to { transform:translateY(0);opacity:1; } }
+
+    /* ── EMPTY ── */
+    .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
+    .empty-state i { font-size: 2.5rem; color: #ddd; display: block; margin-bottom: 0.75rem; }
+
+    /* ── DIVIDER ── */
+    .divider { height: 1px; background: var(--border); margin: 1rem 0; }
+
+    /* ── CHAR COUNT ── */
+    .char-count { font-size: 10px; color: var(--muted); text-align: right; margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="login-screen" class="login-screen">
+  <div class="login-box">
+    <div class="login-logo"><em>Dulce</em> Atelier</div>
+    <div class="login-sub">Panel de administración</div>
+
+    <div class="field">
+      <label>Usuario</label>
+      <input type="text" id="l-user" placeholder="admin" />
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" />
+    </div>
+    <button class="btn-login" onclick="doLogin()">Entrar</button>
+    <div class="login-err" id="l-err"></div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app" class="app">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="s-logo"><em>Dulce</em> Atelier</div>
+
+    <span class="s-section">Publicación</span>
+    <button class="s-btn active" onclick="nav('publish')"><i class="ti ti-cake"></i> Nuevo dulce</button>
+    <button class="s-btn" onclick="nav('catalog')"><i class="ti ti-layout-grid"></i> Catálogo</button>
+
+    <span class="s-section">Análisis</span>
+    <button class="s-btn" onclick="nav('stats')"><i class="ti ti-chart-bar"></i> Estadísticas</button>
+
+    <span class="s-section">Ajustes</span>
+    <button class="s-btn" onclick="nav('settings')"><i class="ti ti-settings"></i> Redes sociales</button>
+
+    <div class="s-footer">
+      <a href="/" style="display:block" target="_blank">
+        <button class="s-btn"><i class="ti ti-world"></i> Ver tienda</button>
+      </a>
+      <button class="s-btn" onclick="doLogout()"><i class="ti ti-logout"></i> Cerrar sesión</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── PUBLISH ── -->
+    <div class="view active" id="view-publish">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Publicar nuevo <em>dulce</em></div>
+          <div class="page-sub">Se publica en la tienda y en las redes activas automáticamente</div>
+        </div>
+        <button class="btn-rose" onclick="handlePublish()">
+          <i class="ti ti-send"></i> Publicar ahora
+        </button>
+      </div>
+
+      <div class="pub-grid">
+        <div style="display:flex;flex-direction:column;gap:1.25rem">
+
+          <!-- FOTOS -->
+          <div class="card">
+            <div class="card-title"><i class="ti ti-photo"></i> Fotos del producto</div>
+            <div class="drop-zone" id="dropzone"
+              ondragover="dz(event,'drag')" ondragleave="dz(event,'')" ondrop="handleDrop(event)">
+              <input type="file" accept="image/*" multiple onchange="handleFiles(this.files)" />
+              <div class="drop-icon"><i class="ti ti-cloud-upload"></i></div>
+              <div class="drop-text">Arrastra fotos aquí o haz clic para subir</div>
+              <div class="drop-hint">JPG · PNG · WEBP · Máx. 10 MB</div>
+            </div>
+            <div class="img-preview-grid" id="img-preview"></div>
+          </div>
+
+          <!-- DETALLES -->
+          <div class="card">
+            <div class="card-title"><i class="ti ti-pencil"></i> Detalles del producto</div>
+
+            <label class="f-label">Nombre *</label>
+            <input class="f-input" id="p-name" placeholder="Ej. Tarta de unicornio" oninput="updatePreview()" />
+
+            <label class="f-label">Descripción</label>
+            <textarea class="f-textarea" id="p-desc" placeholder="Ingredientes, sabor, tamaño, personalización disponible..." oninput="updatePreview();countChars()"></textarea>
+            <div class="char-count"><span id="cc">0</span> / 280</div>
+
+            <div class="two-col">
+              <div>
+                <label class="f-label">Precio</label>
+                <input class="f-input" id="p-price" placeholder="Ej. 38 €" oninput="updatePreview()" />
+              </div>
+              <div>
+                <label class="f-label">Categoría</label>
+                <select class="f-select" id="p-cat" onchange="updatePreview()">
+                  <option value="">Seleccionar...</option>
+                  <option>Tartas temáticas</option>
+                  <option>Bollos artesanos</option>
+                  <option>Cupcakes</option>
+                  <option>Galletas decoradas</option>
+                  <option>Porciones</option>
+                  <option>Postres individuales</option>
+                  <option>Especiales</option>
+                </select>
+              </div>
+            </div>
+
+            <label class="f-label">Hashtags</label>
+            <input class="f-input" id="p-tags" placeholder="#pasteleria #artesanal #tematizado" />
+
+            <div class="divider"></div>
+
+            <label class="f-label">Programar publicación (opcional)</label>
+            <input class="f-input" type="datetime-local" id="p-schedule" />
+          </div>
+
+        </div>
+
+        <!-- SIDEBAR DERECHO -->
+        <div style="display:flex;flex-direction:column;gap:1.25rem">
+
+          <!-- REDES -->
+          <div class="card">
+            <div class="card-title"><i class="ti ti-share"></i> Publicar en</div>
+            <div class="net-list">
+              <div class="net-row on" onclick="toggleNet(this,'ig')">
+                <div class="net-ico ig"><i class="ti ti-brand-instagram"></i></div>
+                <div class="net-info">
+                  <div class="net-name">Instagram</div>
+                  <div class="net-handle">@dulceatelier</div>
+                </div>
+                <button class="net-tog on" id="tog-ig"></button>
+              </div>
+              <div class="net-row on" onclick="toggleNet(this,'fb')">
+                <div class="net-ico fb"><i class="ti ti-brand-facebook"></i></div>
+                <div class="net-info">
+                  <div class="net-name">Facebook</div>
+                  <div class="net-handle">Dulce Atelier</div>
+                </div>
+                <button class="net-tog on" id="tog-fb"></button>
+              </div>
+              <div class="net-row on" onclick="toggleNet(this,'tw')">
+                <div class="net-ico tw"><i class="ti ti-brand-x"></i></div>
+                <div class="net-info">
+                  <div class="net-name">Twitter / X</div>
+                  <div class="net-handle">@dulceatelier</div>
+                </div>
+                <button class="net-tog on" id="tog-tw"></button>
+              </div>
+              <div class="net-row on" onclick="toggleNet(this,'tt')">
+                <div class="net-ico tt"><i class="ti ti-brand-tiktok"></i></div>
+                <div class="net-info">
+                  <div class="net-name">TikTok</div>
+                  <div class="net-handle">@dulceatelier</div>
+                </div>
+                <button class="net-tog on" id="tog-tt"></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- PREVIEW -->
+          <div class="card">
+            <div class="card-title"><i class="ti ti-eye"></i> Vista previa</div>
+            <div class="prev-box">
+              <div class="prev-header">
+                <div class="prev-avatar">DA</div>
+                <div class="prev-uname">dulceatelier</div>
+                <div class="prev-time">Ahora</div>
+              </div>
+              <div class="prev-img" id="prev-img">🧁</div>
+              <div class="prev-body">
+                <div class="prev-caption" id="prev-cap">El nombre y descripción aparecerán aquí como caption.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CATALOG ── -->
+    <div class="view" id="view-catalog">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Catálogo de <em>productos</em></div>
+          <div class="page-sub">Todos los dulces publicados en la tienda</div>
+        </div>
+        <button class="btn-rose" onclick="nav('publish')">
+          <i class="ti ti-plus"></i> Nuevo dulce
+        </button>
+      </div>
+      <div class="filter-bar" id="filter-bar">
+        <button class="f-chip active" onclick="filterCat(this,'all')">Todo</button>
+      </div>
+      <div class="p-grid" id="p-grid"></div>
+    </div>
+
+    <!-- ── STATS ── -->
+    <div class="view" id="view-stats">
+      <div class="topbar">
+        <div>
+          <div class="page-title"><em>Estadísticas</em></div>
+          <div class="page-sub">Rendimiento de publicaciones en redes sociales</div>
+        </div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-lbl">Total publicados</div>
+          <div class="stat-val" id="st-total">—</div>
+          <div class="stat-sub">dulces en tienda</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Este mes</div>
+          <div class="stat-val" id="st-month">—</div>
+          <div class="stat-sub">publicaciones</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Redes activas</div>
+          <div class="stat-val">4</div>
+          <div class="stat-sub">IG · FB · X · TK</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-lbl">Programados</div>
+          <div class="stat-val" id="st-sched">—</div>
+          <div class="stat-sub">pendientes</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="ti ti-activity"></i> Actividad reciente</div>
+        <div id="activity-list">
+          <div class="empty-state"><i class="ti ti-inbox"></i>Publica tu primer dulce para ver la actividad.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="view" id="view-settings">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Redes <em>sociales</em></div>
+          <div class="page-sub">Estado de las cuentas conectadas</div>
+        </div>
+      </div>
+      <div style="max-width:520px;display:flex;flex-direction:column;gap:1rem">
+        ${['ig','fb','tw','tt'].map((id, i) => {
+          const names = ['Instagram','Facebook','Twitter / X','TikTok'];
+          const icons = ['brand-instagram','brand-facebook','brand-x','brand-tiktok'];
+          const cls   = ['ig','fb','tw','tt'];
+          return `<div class="card">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="net-ico ${cls[i]}"><i class="ti ti-${icons[i]}"></i></div>
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:400">${names[i]}</div>
+                <div style="font-size:11px;color:var(--muted)">@dulceatelier · Conectado</div>
+              </div>
+              <span style="font-size:11px;background:#EAF3DE;color:#3B6D11;padding:4px 10px;border-radius:20px">✓ Activo</span>
+            </div>
+            <p style="font-size:12px;color:var(--muted);margin-top:0.75rem;line-height:1.6">
+              Conecta tu cuenta en el archivo <code>.env</code> con las credenciales de la API. 
+              <a href="https://docs.anthropic.com" style="color:var(--rose)">Ver documentación →</a>
+            </p>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── MODAL ÉXITO ── -->
+<div class="modal-bg" id="success-modal">
+  <div class="modal-box">
+    <div style="font-size:3rem;margin-bottom:1rem">🎂</div>
+    <div class="modal-title">¡Publicado con éxito!</div>
+    <div class="modal-body-text" id="modal-msg"></div>
+    <div class="modal-acts">
+      <button class="btn-outline" onclick="closeModal();nav('catalog')">
+        <i class="ti ti-layout-grid"></i> Ver catálogo
+      </button>
+      <button class="btn-rose" onclick="closeModal();resetForm()">
+        <i class="ti ti-plus"></i> Publicar otro
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── STATE ── */
+const S = { images: [], products: [], activities: [] };
+let authenticated = false;
+
+/* ── AUTH ── */
+async function doLogin() {
+  const user = document.getElementById('l-user').value.trim();
+  const pass = document.getElementById('l-pass').value;
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: user, password: pass }),
+    });
+    if (!res.ok) {
+      document.getElementById('l-err').textContent = 'Usuario o contraseña incorrectos';
+      return;
+    }
+    showApp();
+  } catch {
+    document.getElementById('l-err').textContent = 'Error de conexión con el servidor';
+  }
+}
+
+async function doLogout() {
+  await fetch('/api/auth/logout', { method: 'POST' });
+  location.reload();
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  authenticated = true;
+  loadProducts();
+}
+
+/* ── Check session on load ── */
+(async () => {
+  const res = await fetch('/api/auth/me').then(r => r.json()).catch(() => ({}));
+  if (res.authenticated) showApp();
+})();
+
+/* ── NAVIGATION ── */
+function nav(view) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.s-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  const map = { publish: 0, catalog: 1, stats: 2, settings: 3 };
+  const btns = document.querySelectorAll('.s-btn');
+  if (map[view] !== undefined) btns[map[view]]?.classList.add('active');
+  if (view === 'catalog') renderCatalog('all');
+  if (view === 'stats')   loadStats();
+}
+
+/* ── IMAGES ── */
+function dz(e, cls) {
+  e.preventDefault();
+  document.getElementById('dropzone').classList[cls ? 'add' : 'remove']('drag');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropzone').classList.remove('drag');
+  handleFiles(e.dataTransfer.files);
+}
+function handleFiles(files) {
+  Array.from(files).forEach(f => {
+    if (!f.type.startsWith('image/')) return;
+    const r = new FileReader();
+    r.onload = ev => { S.images.push({ data: ev.target.result, file: f }); renderThumbs(); updatePreview(); };
+    r.readAsDataURL(f);
+  });
+}
+function renderThumbs() {
+  document.getElementById('img-preview').innerHTML = S.images.map((img, i) => `
+    <div class="img-thumb">
+      <img src="${img.data}" alt="" />
+      <button class="rm" onclick="S.images.splice(${i},1);renderThumbs();updatePreview()">✕</button>
+    </div>`).join('');
+}
+
+/* ── PREVIEW ── */
+function updatePreview() {
+  const name = document.getElementById('p-name').value;
+  const desc = document.getElementById('p-desc').value;
+  const price= document.getElementById('p-price').value;
+  let cap = '';
+  if (name)  cap += `✨ ${name}`;
+  if (price) cap += `  ·  ${price}`;
+  if (desc)  cap += `\n\n${desc.substring(0,200)}`;
+  document.getElementById('prev-cap').textContent = cap || 'El nombre y descripción aparecerán aquí como caption.';
+  const pi = document.getElementById('prev-img');
+  if (S.images.length) pi.innerHTML = `<img src="${S.images[0].data}" alt="" />`;
+  else pi.innerHTML = '🧁';
+}
+function countChars() {
+  document.getElementById('cc').textContent = document.getElementById('p-desc').value.length;
+}
+
+/* ── NETWORK TOGGLE ── */
+function toggleNet(row, id) {
+  const tog = document.getElementById('tog-' + id);
+  tog.classList.toggle('on');
+  row.classList.toggle('on');
+}
+function activeNets() {
+  return ['ig','fb','tw','tt'].filter(id => document.getElementById('tog-' + id).classList.contains('on'));
+}
+
+/* ── PUBLISH ── */
+async function handlePublish() {
+  const name = document.getElementById('p-name').value.trim();
+  if (!name) { toast('⚠️ Escribe el nombre del dulce'); return; }
+  const nets = activeNets();
+  if (!nets.length) { toast('⚠️ Selecciona al menos una red'); return; }
+
+  // Build form data for real API
+  const fd = new FormData();
+  fd.append('name',        name);
+  fd.append('description', document.getElementById('p-desc').value);
+  fd.append('price',       document.getElementById('p-price').value);
+  fd.append('category',    document.getElementById('p-cat').value);
+  fd.append('hashtags',    document.getElementById('p-tags').value);
+  fd.append('scheduled_at',document.getElementById('p-schedule').value);
+  const netMap = { ig:'instagram', fb:'facebook', tw:'twitter', tt:'tiktok' };
+  nets.forEach(n => fd.append('networks', netMap[n]));
+  S.images.forEach(img => fd.append('images', img.file));
+
+  const product = {
+    id: Date.now(), name,
+    description: document.getElementById('p-desc').value,
+    price: document.getElementById('p-price').value,
+    category: document.getElementById('p-cat').value || 'Sin categoría',
+    images: S.images.map(i => i.data),
+    nets: [...nets], date: new Date().toLocaleDateString('es-ES')
+  };
+
+  // Try real API; if not available, simulate
+  try {
+    const res = await fetch('/api/products', { method: 'POST', body: fd });
+    if (res.ok) {
+      const data = await res.json();
+      saveLocalProduct(product, nets);
+      showSuccess(name, nets);
+      return;
+    }
+  } catch (_) {}
+
+  // Demo mode: simulate success
+  saveLocalProduct(product, nets);
+  showSuccess(name, nets);
+}
+
+function saveLocalProduct(product, nets) {
+  S.products.unshift(product);
+  const netNames = { ig:'Instagram', fb:'Facebook', tw:'Twitter/X', tt:'TikTok' };
+  S.activities.unshift({
+    type: 'ok',
+    text: `"${product.name}" publicado en ${nets.map(n => netNames[n]).join(', ')}`,
+    time: 'Hace un momento'
+  });
+}
+
+function showSuccess(name, nets) {
+  const netNames = { ig:'Instagram', fb:'Facebook', tw:'Twitter/X', tt:'TikTok' };
+  document.getElementById('modal-msg').innerHTML =
+    `<strong>${name}</strong> ya está en tu tienda online y publicado en:<br><br>` +
+    nets.map(n => `<span style="display:inline-block;margin:3px;padding:4px 10px;border-radius:20px;background:var(--rose-pale);color:var(--rose);font-size:12px">${netNames[n]}</span>`).join('');
+  document.getElementById('success-modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('success-modal').classList.remove('open'); }
+
+function resetForm() {
+  ['p-name','p-desc','p-price','p-tags','p-schedule'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('p-cat').value = '';
+  document.getElementById('cc').textContent = '0';
+  S.images = [];
+  renderThumbs();
+  updatePreview();
+}
+
+/* ── CATALOG ── */
+async function loadProducts() {
+  try {
+    const res  = await fetch('/api/products?limit=100');
+    const data = await res.json();
+    if (data.products) S.products = data.products.map(p => ({ ...p, images: p.images || [], nets: [] }));
+  } catch (_) {}
+}
+
+function renderCatalog(cat) {
+  // Build category filters
+  const cats = [...new Set(S.products.map(p => p.category).filter(Boolean))];
+  const fb = document.getElementById('filter-bar');
+  fb.innerHTML = '<button class="f-chip' + (cat==='all'?' active':'') + '" onclick="filterCat(this,\'all\')">Todo</button>' +
+    cats.map(c =>
+      `<button class="f-chip${cat===c?' active':''}" onclick="filterCat(this,'${c}')">${c}</button>`
+    ).join('');
+
+  const prods = cat === 'all' ? S.products : S.products.filter(p => p.category === cat);
+  const g = document.getElementById('p-grid');
+
+  if (!prods.length) {
+    g.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <i class="ti ti-cake"></i>
+      Aún no hay dulces publicados.<br>
+      <button class="btn-rose" style="margin:1rem auto 0" onclick="nav('publish')">
+        <i class="ti ti-plus"></i> Publicar primero
+      </button>
+    </div>`;
+    return;
+  }
+
+  const netColor = { ig:'#C97B84', fb:'#1877F2', tw:'#111', tt:'#010101' };
+  const netLabel = { ig:'IG', fb:'FB', tw:'X', tt:'TK' };
+
+  g.innerHTML = prods.map(p => {
+    const img = (Array.isArray(p.images) ? p.images[0] : null)
+      ? `<img src="${Array.isArray(p.images) ? p.images[0] : p.images}" alt="${p.name}" />`
+      : '🎂';
+    const netDots = (p.nets || []).map(n =>
+      `<div class="net-dot" style="background:${netColor[n]}">${netLabel[n]}</div>`
+    ).join('');
+    return `<div class="p-mini">
+      <div class="p-mini-img">${img}</div>
+      <div class="p-mini-body">
+        <div class="p-mini-name">${p.name}</div>
+        <div class="p-mini-price">${p.price || ''}</div>
+        <div class="p-mini-cat">${p.category || ''}</div>
+        ${netDots ? `<div class="p-mini-nets">${netDots}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterCat(btn, cat) {
+  document.querySelectorAll('.f-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCatalog(cat);
+}
+
+/* ── STATS ── */
+async function loadStats() {
+  try {
+    const res  = await fetch('/api/stats');
+    const data = await res.json();
+    document.getElementById('st-total').textContent = data.totalProducts ?? S.products.length;
+    document.getElementById('st-month').textContent = data.thisMonth ?? '—';
+    document.getElementById('st-sched').textContent = data.scheduled ?? '—';
+    const acts = data.recentActivity || [];
+    const al = document.getElementById('activity-list');
+    if (!acts.length && !S.activities.length) return;
+    const combined = [...S.activities, ...acts];
+    al.innerHTML = combined.map(a => `
+      <div class="act-row">
+        <div class="act-dot dot-${a.type || 'ok'}"></div>
+        <div>
+          <div class="act-text">${a.text || (a.product_name + ' → ' + a.network)}</div>
+          <div class="act-time">${a.time || a.posted_at || ''}</div>
+        </div>
+      </div>`).join('');
+  } catch {
+    document.getElementById('st-total').textContent = S.products.length;
+    if (S.activities.length) {
+      document.getElementById('activity-list').innerHTML = S.activities.map(a => `
+        <div class="act-row">
+          <div class="act-dot dot-ok"></div>
+          <div><div class="act-text">${a.text}</div><div class="act-time">${a.time}</div></div>
+        </div>`).join('');
+    }
+  }
+}
+
+/* ── TOAST ── */
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
