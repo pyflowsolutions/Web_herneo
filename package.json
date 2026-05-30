@@ -1,7 +1,7 @@
 {
-  "name": "restaurante-social-publisher",
+  "name": "horneo-social-publisher",
   "version": "1.0.0",
-  "description": "Plataforma para publicar platos del restaurante en el sitio web y redes sociales",
+  "description": "Plataforma para publicar Reposteria en el sitio web y redes sociales",
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
