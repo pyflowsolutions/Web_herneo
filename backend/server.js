@@ -41,8 +41,12 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'public', 'index.html'));
 });
 
-// ── Panel de administración ──────────────────────────────
-app.get('/admin*', (req, res) => {
+// ── Forzar la carga de Admin de forma dinámica para Vercel ──
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'public', 'admin.html'));
+});
+
+app.get('/admin.html', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'public', 'admin.html'));
 });
 
