@@ -83,4 +83,11 @@ app.listen(PORT, () => {
   console.log(`   API REST:      http://localhost:${PORT}/api/products\n`);
 });
 
+// ... Todo tu código actual de las rutas y el setInterval ...
+
+app.listen(PORT, () => {
+  console.log(`\n🍽️  Restaurante backend activo en puerto: ${PORT}`);
+});
+
+// ── EXPORTACIÓN OBLIGATORIA PARA VERCEL ──────────────────
 module.exports = app;
