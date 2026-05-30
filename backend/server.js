@@ -36,18 +36,17 @@ app.use('/api/auth',     authRouter);
 app.use('/api/stats',    statsRouter);
 
 // ── Página pública del restaurante ──────────────────────
-// Muestra el catálogo de platos disponibles
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'public', 'index.html'));
 });
 
-// ── Forzar la carga de Admin de forma dinámica para Vercel ──
+// ── ENRUTAMIENTO CORREGIDO PARA ADMIN (Lee directamente desde la raíz del repositorio) ──
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'public', 'admin.html'));
+  res.sendFile(path.join(__dirname, '..', 'admin.html'));
 });
 
 app.get('/admin.html', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'public', 'admin.html'));
+  res.sendFile(path.join(__dirname, '..', 'admin.html'));
 });
 
 // ── Manejo de errores ────────────────────────────────────
@@ -63,35 +62,36 @@ app.use((err, req, res, next) => {
 setInterval(async () => {
   const { publishToNetworks } = require('./social');
   const now = new Date().toISOString();
-  const due = db.prepare(`
-    SELECT * FROM products
-    WHERE status = 'scheduled' AND scheduled_at <= ?
-  `).all(now);
+  try {
+    const due = db.prepare(`
+      SELECT * FROM products
+      WHERE status = 'scheduled' AND scheduled_at <= ?
+    `).all(now);
 
-  for (const product of due) {
-    console.log(`[scheduler] Publicando plato programado: ${product.name}`);
-    const nets = JSON.parse(
-      db.prepare("SELECT value FROM settings WHERE key='active_networks'").get().value || '[]'
-    );
-    await publishToNetworks(product, nets, db);
-    db.prepare(
-      "UPDATE products SET status='published', published_at=? WHERE id=?"
-    ).run(now, product.id);
+    for (const product of due) {
+      console.log(`[scheduler] Publicando plato programado: ${product.name}`);
+      const settingsRow = db.prepare("SELECT value FROM settings WHERE key='active_networks'").get();
+      const nets = JSON.parse(settingsRow?.value || '["telegram"]');
+      
+      await publishToNetworks(product, nets, db);
+      db.prepare(
+        "UPDATE products SET status='published', published_at=? WHERE id=?"
+      ).run(now, product.id);
+    }
+  } catch (err) {
+    console.error('[scheduler-error]', err.message);
   }
 }, 60 * 1000); // Comprueba cada minuto
 
-app.listen(PORT, () => {
-  console.log(`\n🍽️  Restaurante Social Publisher`);
-  console.log(`   Sitio web:     http://localhost:${PORT}`);
-  console.log(`   Panel admin:   http://localhost:${PORT}/admin`);
-  console.log(`   API REST:      http://localhost:${PORT}/api/products\n`);
-});
-
-// ... Todo tu código actual de las rutas y el setInterval ...
-
-app.listen(PORT, () => {
-  console.log(`\n🍽️  Restaurante backend activo en puerto: ${PORT}`);
-});
+// ── Arranque del servidor local (Solo si no estamos en Vercel) ──
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`\n🍽️  Restaurante Social Publisher Local`);
+    console.log(`   Sitio web:     http://localhost:${PORT}`);
+    console.log(`   Panel admin:   http://localhost:${PORT}/admin`);
+    console.log(`   API REST:      http://localhost:${PORT}/api/products\n`);
+  });
+}
 
 // ── EXPORTACIÓN OBLIGATORIA PARA VERCEL ──────────────────
 module.exports = app;
