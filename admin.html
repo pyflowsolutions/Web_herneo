@@ -24,7 +24,6 @@
       min-height: 100vh;
     }
 
-    /* Sidebar Styles */
     .sidebar {
       width: 260px;
       background: var(--bg-sidebar);
@@ -74,7 +73,6 @@
       color: #fff;
     }
 
-    /* Main Content */
     .main-content {
       flex: 1;
       padding: 40px;
@@ -122,7 +120,6 @@
       color: #4a1d24;
     }
 
-    /* Form Fields */
     .form-group {
       margin-bottom: 20px;
     }
@@ -154,7 +151,6 @@
       box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.15);
     }
 
-    /* Dropzone area */
     .dropzone {
       border: 2px dashed #cbd5e0;
       border-radius: 12px;
@@ -170,7 +166,6 @@
       background: #fdfaff;
     }
 
-    /* Switch Component */
     .switch {
       position: relative;
       display: inline-block;
@@ -230,7 +225,6 @@
       transform: translateY(-1px);
     }
 
-    /* Preview Box */
     .preview-card {
       border: 1px solid var(--border-color);
       border-radius: 12px;
@@ -284,7 +278,6 @@
           <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
             <i class="ti ti-cloud-upload" style="font-size: 32px; color: #a0aec0; margin-bottom: 8px; display: block;"></i>
             <span style="font-size: 14px; font-weight: 500; color: #4a5568;">Arrastra fotos aquí o haz clic para subir</span>
-            <span style="font-size: 12px; color: #a0aec0; display: block; margin-top: 4px;">JPG · PNG · WEBP - Máx. 10 MB</span>
             <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="handleFiles(this.files)">
           </div>
           <div id="imagesPreviewContainer" style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;"></div>
@@ -298,7 +291,7 @@
           </div>
           <div class="form-group">
             <label>Descripción</label>
-            <textarea id="prodDesc" class="form-control" rows="4" placeholder="Ingredientes, sabor, tamaño, personalización disponible..." oninput="updatePreview()"></textarea>
+            <textarea id="prodDesc" class="form-control" rows="4" placeholder="Ingredientes, sabor, tamaño..." oninput="updatePreview()"></textarea>
           </div>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
             <div class="form-group">
@@ -317,7 +310,7 @@
           </div>
           <div class="form-group">
             <label>Hashtags</label>
-            <input type="text" id="prodHashtags" class="form-control" placeholder="#pasteleria #artesanal #tematizado">
+            <input type="text" id="prodHashtags" class="form-control" placeholder="#pasteleria #artesanal">
           </div>
           <div class="form-group">
             <label>Programar publicación (Opcional)</label>
@@ -423,28 +416,25 @@
   </div>
 
   <script>
-    let uploadedImagesBase64 = [];
+    let selectedFiles = [];
 
     function handleFiles(files) {
       for (const file of files) {
         if (!file.type.startsWith('image/')) continue;
+        selectedFiles.push(file);
+        
         const reader = new FileReader();
         reader.onload = function(e) {
-          const base64String = e.target.result;
-          uploadedImagesBase64.push(base64String);
-          
-          // Pintar miniaturas en la vista de subida
           const img = document.createElement('img');
-          img.src = base64String;
+          img.src = e.target.result;
           img.style.width = '70px';
           img.style.height = '70px';
           img.style.objectFit = 'cover';
           img.style.borderRadius = '8px';
           img.style.border = '1px solid #cbd5e0';
           document.getElementById('imagesPreviewContainer').appendChild(img);
-
-          // Actualizar la pantalla grande de vista previa
-          document.getElementById('previewImgWrapper').innerHTML = `<img src="${base64String}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">`;
+          
+          document.getElementById('previewImgWrapper').innerHTML = `<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">`;
         };
         reader.readAsDataURL(file);
       }
@@ -465,41 +455,42 @@
       const hashtags = document.getElementById('prodHashtags').value;
       const scheduled_at = document.getElementById('prodScheduled').value;
 
-      // Conseguir los checkboxes de redes seleccionadas
-      const networks = [];
-      document.querySelectorAll('input[name="networks"]:checked').forEach(cb => {
-        networks.push(cb.value);
-      });
-
       if (!name.trim()) {
         alert('Por favor, introduce el nombre del dulce.');
         return;
       }
 
-      const payload = {
-        name,
-        description,
-        price,
-        category,
-        hashtags,
-        scheduled_at: scheduled_at || null,
-        networks,
-        images: uploadedImagesBase64 // Se envía como un array de strings en Base64
-      };
+      // IMPORTANTE: Usamos FormData para enviar archivos binarios sin corromper Multer ni saturar Vercel
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('description', description);
+      formData.append('price', price);
+      formData.append('category', category);
+      formData.append('hashtags', hashtags);
+      if (scheduled_at) formData.append('scheduled_at', scheduled_at);
+
+      // Mapear los interruptores activos de redes sociales
+      document.querySelectorAll('input[name="networks"]:checked').forEach(cb => {
+        formData.append('networks', cb.value);
+      });
+
+      // Adjuntar los archivos binarios reales
+      selectedFiles.forEach(file => {
+        formData.append('images', file);
+      });
 
       try {
         const response = await fetch('/api/products', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: formData // No ponemos cabecera Content-Type, el navegador la calcula con el boundary correcto
         });
 
         const result = await response.json();
         if (response.ok) {
-          alert('¡Dulce publicado y procesado con éxito!');
+          alert('¡Dulce guardado y publicado en redes con éxito!');
           window.location.reload();
         } else {
-          alert('Error: ' + (result.error || 'No se pudo guardar'));
+          alert('Error del servidor: ' + (result.error || 'No se pudo guardar'));
         }
       } catch (err) {
         console.error(err);
@@ -507,7 +498,7 @@
       }
     }
 
-    // Permitir Drag and Drop básico
+    // Drag and Drop
     const dropzone = document.getElementById('dropzone');
     dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = '#a855f7'; });
     dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = '#cbd5e0'; });
