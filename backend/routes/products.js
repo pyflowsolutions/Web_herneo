@@ -1,239 +1,189 @@
 // backend/routes/products.js — API REST para productos
 const express = require('express');
-const multer  = require('multer');
 const path    = require('path');
 const fs      = require('fs');
-const sharp   = require('sharp');
 const { publishToNetworks } = require('../social');
 
 const router = express.Router();
 
-// ── Middleware de autenticación simple ───────────────────
+// ── Middleware de autenticación ──────────────────────────
 function requireAuth(req, res, next) {
   if (req.session?.authenticated) return next();
   res.status(401).json({ error: 'No autorizado' });
 }
 
-// ── Configuración de subida de imágenes ─────────────────
-const UPLOAD_DIR = path.join(__dirname, '..', '..', 'frontend', 'public', 'uploads');
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-  filename: (req, file, cb) => {
-    const ext  = path.extname(file.originalname).toLowerCase() || '.jpg';
-    const name = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
-    cb(null, name);
-  },
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 15 * 1024 * 1024 }, // 15 MB
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) cb(null, true);
-    else cb(new Error('Solo se permiten imágenes'));
-  },
-});
-
-// ── Helper para optimizar imágenes con sharp ─────────────
-async function optimizeImage(filePath) {
-  const optimized = filePath.replace(/(\.\w+)$/, '-opt.webp');
-  await sharp(filePath)
-    .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
-    .webp({ quality: 85 })
-    .toFile(optimized);
-  fs.unlinkSync(filePath); // elimina el original
-  return optimized;
-}
-
-// ─────────────────────────────────────────────────────────
-// GET /api/products — Listar productos
-// ─────────────────────────────────────────────────────────
+// ── GET /api/products — Listar todos los productos ────────
 router.get('/', (req, res) => {
   const db = req.app.locals.db;
-  const { category, status = 'published', page = 1, limit = 20 } = req.query;
-  const offset = (Number(page) - 1) * Number(limit);
-
-  let sql    = 'SELECT * FROM products WHERE status = ?';
-  let params = [status];
-
-  if (category) {
-    sql    += ' AND category = ?';
-    params.push(category);
-  }
-
-  sql += ' ORDER BY published_at DESC LIMIT ? OFFSET ?';
-  params.push(Number(limit), offset);
-
-  const products = db.prepare(sql).all(...params);
-  const total    = db.prepare(
-    `SELECT COUNT(*) as n FROM products WHERE status = ?${category ? ' AND category = ?' : ''}`
-  ).get(...(category ? [status, category] : [status])).n;
-
-  products.forEach(p => { p.images = JSON.parse(p.images || '[]'); });
-
-  res.json({ products, total, page: Number(page), limit: Number(limit) });
-});
-
-// ─────────────────────────────────────────────────────────
-// GET /api/products/:id — Detalle de producto
-// ─────────────────────────────────────────────────────────
-router.get('/:id', (req, res) => {
-  const db = req.app.locals.db;
-  const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-  if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
-
-  product.images = JSON.parse(product.images || '[]');
-  const posts = db.prepare(
-    'SELECT network, status, error_msg, posted_at FROM social_posts WHERE product_id = ?'
-  ).all(product.id);
-
-  res.json({ ...product, social_posts: posts });
-});
-
-// ─────────────────────────────────────────────────────────
-// POST /api/products — Crear y publicar producto
-// ─────────────────────────────────────────────────────────
-router.post('/', requireAuth, upload.array('images', 10), async (req, res) => {
-  const db = req.app.locals.db;
-
   try {
-    const { name, description, price, category, hashtags, networks, scheduled_at } = req.body;
-
-    if (!name?.trim()) {
-      return res.status(400).json({ error: 'El nombre del plato es obligatorio' });
-    }
-
-    // Optimizar imágenes
-    const imagePaths = [];
-    for (const file of (req.files || [])) {
-      try {
-        const optimized = await optimizeImage(file.path);
-        // Guardar la ruta relativa a /public
-        imagePaths.push('uploads/' + path.basename(optimized));
-      } catch {
-        // Si sharp falla (imagen no optimizable), usar original
-        imagePaths.push('uploads/' + path.basename(file.path));
-      }
-    }
-
-    // Parsear redes seleccionadas
-    let selectedNetworks = [];
-    if (networks) {
-      selectedNetworks = Array.isArray(networks) ? networks : [networks];
-    }
-
-    const isScheduled = !!scheduled_at;
-    const status = isScheduled ? 'scheduled' : 'published';
-
-    // Insertar producto en DB
-    const result = db.prepare(`
-      INSERT INTO products (name, description, price, category, hashtags, images, status, scheduled_at, published_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      name.trim(),
-      description?.trim() || null,
-      price?.trim() || null,
-      category?.trim() || null,
-      hashtags?.trim() || null,
-      JSON.stringify(imagePaths),
-      status,
-      scheduled_at || null,
-      isScheduled ? null : new Date().toISOString()
-    );
-
-    const productId = result.lastInsertRowid;
-    const product   = db.prepare('SELECT * FROM products WHERE id = ?').get(productId);
-
-    // Publicar en redes (si no es programado)
-    let socialResults = [];
-    if (!isScheduled && selectedNetworks.length > 0) {
-      socialResults = await publishToNetworks(product, selectedNetworks, db);
-    }
-
-    res.json({
-      ok: true,
-      product: { ...product, images: JSON.parse(product.images) },
-      social: socialResults,
-    });
-
+    const products = db.prepare('SELECT * FROM products ORDER BY id DESC').all();
+    
+    // Parsear el string JSON de imágenes de cada producto
+    const parsed = products.map(p => ({
+      ...p,
+      images: JSON.parse(p.images || '[]')
+    }));
+    
+    res.json(parsed);
   } catch (err) {
-    console.error('[products] Error al crear producto:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ─────────────────────────────────────────────────────────
-// PUT /api/products/:id — Actualizar producto
-// ─────────────────────────────────────────────────────────
-router.put('/:id', requireAuth, (req, res) => {
+// ── POST /api/products — Crear un nuevo producto (JSON / Base64) ──
+router.post('/', requireAuth, async (req, res) => {
   const db = req.app.locals.db;
-  const { name, description, price, category, hashtags } = req.body;
+  
+  try {
+    // Extraemos los datos estructurados enviados por admin.html
+    const { name, category, price, description, status, scheduled_at, images, networks } = req.body;
 
-  const existing = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-  if (!existing) return res.status(404).json({ error: 'Producto no encontrado' });
+    if (!name) {
+      return res.status(400).json({ error: 'El nombre del producto es obligatorio' });
+    }
 
-  db.prepare(`
-    UPDATE products SET name=?, description=?, price=?, category=?, hashtags=?
-    WHERE id=?
-  `).run(
-    name || existing.name,
-    description ?? existing.description,
-    price ?? existing.price,
-    category ?? existing.category,
-    hashtags ?? existing.hashtags,
-    req.params.id
-  );
+    const id = Date.now().toString();
+    const finalStatus = status || 'published';
+    const imagesArray = images || []; // Viene como array de Base64 o URLs
+    const imagesJson = JSON.stringify(imagesArray);
 
-  const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-  updated.images = JSON.parse(updated.images || '[]');
-  res.json({ ok: true, product: updated });
+    // 1. Insertar el plato en la base de datos local SQLite
+    db.prepare(`
+      INSERT INTO products (id, name, category, price, description, status, scheduled_at, images)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, name, category, price, description, finalStatus, scheduled_at || null, imagesJson);
+
+    // 2. PUBLICACIÓN INMEDIATA EN REDES SOCIALES (Telegram / Instagram)
+    // Si el estado es "published" (en el acto) y el usuario marcó checkboxes:
+    if (finalStatus === 'published' && networks && networks.length > 0) {
+      console.log(`[social] Difundiendo plato "${name}" de inmediato en:`, networks);
+      
+      // Reconstruimos el objeto del producto simulado para pasarlo a tu script de redes sociales
+      const productForSocial = {
+        id,
+        name,
+        category,
+        price,
+        description,
+        images: imagesArray
+      };
+
+      try {
+        // Ejecutamos tu función oficial encargada de la API de las redes sociales
+        await publishToNetworks(productForSocial, networks, db);
+      } catch (socialErr) {
+        console.error('[social-error] Falló la publicación en las redes:', socialErr.message);
+        // No bloqueamos el flujo; devolvemos éxito para que el plato permanezca guardado en la web
+      }
+    }
+
+    res.status(201).json({ message: '¡Plato creado y procesado con éxito!', id });
+
+  } catch (err) {
+    console.error('[products-router POST]', err.message);
+    res.status(500).json({ error: 'Error interno al guardar el plato: ' + err.message });
+  }
 });
 
-// ─────────────────────────────────────────────────────────
-// DELETE /api/products/:id — Eliminar producto
-// ─────────────────────────────────────────────────────────
+// ── PUT /api/products/:id — Modificar un producto existente ──
+router.put('/:id', requireAuth, async (req, res) => {
+  const db = req.app.locals.db;
+  try {
+    const { name, category, price, description, status, scheduled_at, images, networks } = req.body;
+    
+    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
+    if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+
+    const finalStatus = status || product.status;
+    const imagesJson = images ? JSON.stringify(images) : product.images;
+
+    // Actualizar base de datos
+    db.prepare(`
+      UPDATE products
+      SET name = ?, category = ?, price = ?, description = ?, status = ?, scheduled_at = ?, images = ?
+      WHERE id = ?
+    `).run(
+      name || product.name,
+      category !== undefined ? category : product.category,
+      price !== undefined ? price : product.price,
+      description !== undefined ? description : product.description,
+      finalStatus,
+      scheduled_at || null,
+      imagesJson,
+      req.params.id
+    );
+
+    // Si al editar se fuerza la publicación inmediata de redes
+    if (finalStatus === 'published' && networks && networks.length > 0) {
+      const updatedProduct = {
+        id: req.params.id,
+        name: name || product.name,
+        category: category !== undefined ? category : product.category,
+        price: price !== undefined ? price : product.price,
+        description: description !== undefined ? description : product.description,
+        images: images || JSON.parse(product.images || '[]')
+      };
+      
+      try {
+        await publishToNetworks(updatedProduct, networks, db);
+      } catch (socialErr) {
+        console.error('[social-error-edit] Falló la publicación:', socialErr.message);
+      }
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── DELETE /api/products/:id — Eliminar un producto ────────
 router.delete('/:id', requireAuth, (req, res) => {
   const db = req.app.locals.db;
-  const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-  if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+  try {
+    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
+    if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
 
-  // Eliminar imágenes del disco
-  const images = JSON.parse(product.images || '[]');
-  images.forEach(img => {
-    const full = path.join(__dirname, '..', '..', 'frontend', 'public', img);
-    if (fs.existsSync(full)) fs.unlinkSync(full);
-  });
-
-  db.prepare('DELETE FROM products WHERE id = ?').run(req.params.id);
-  res.json({ ok: true });
+    db.prepare('DELETE FROM products WHERE id = ?').run(req.params.id);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// ─────────────────────────────────────────────────────────
-// GET /api/products/:id/social — Estado en redes sociales
-// ─────────────────────────────────────────────────────────
+// ── GET /api/products/:id/social — Estado en redes sociales ─
 router.get('/:id/social', requireAuth, (req, res) => {
   const db = req.app.locals.db;
-  const posts = db.prepare(
-    'SELECT * FROM social_posts WHERE product_id = ? ORDER BY created_at DESC'
-  ).all(req.params.id);
-  res.json({ posts });
+  try {
+    const posts = db.prepare(
+      'SELECT * FROM social_posts WHERE product_id = ? ORDER BY created_at DESC'
+    ).all(req.params.id);
+    res.json({ posts });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// ─────────────────────────────────────────────────────────
-// POST /api/products/:id/republish — Republicar en una red
-// ─────────────────────────────────────────────────────────
+// ── POST /api/products/:id/republish — Republicar en una red ──
 router.post('/:id/republish', requireAuth, async (req, res) => {
   const db = req.app.locals.db;
   const { networks } = req.body;
   if (!networks?.length) return res.status(400).json({ error: 'Especifica las redes a republicar' });
 
-  const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-  if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+  try {
+    const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
+    if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
 
-  const results = await publishToNetworks(product, networks, db);
-  res.json({ ok: true, social: results });
+    const flatProduct = {
+      ...product,
+      images: JSON.parse(product.images || '[]')
+    };
+
+    await publishToNetworks(flatProduct, networks, db);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;
