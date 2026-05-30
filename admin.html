@@ -718,23 +718,35 @@
 const S = { images: [], products: [], activities: [] };
 let authenticated = false;
 
-/* ── AUTH ── */
+/* ── AUTH (Paso 3 Integrado: Validación Segura contra la API Serverless) ── */
 async function doLogin() {
   const user = document.getElementById('l-user').value.trim();
   const pass = document.getElementById('l-pass').value;
+  const errorEl = document.getElementById('l-err');
+
+  errorEl.textContent = ''; // Limpiar errores
+
+  if (!user || !pass) {
+    errorEl.textContent = 'Por favor, rellena todos los campos';
+    return;
+  }
+
   try {
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: user, password: pass }),
     });
-    if (!res.ok) {
-      document.getElementById('l-err').textContent = 'Usuario o contraseña incorrectos';
-      return;
+
+    const data = await res.json();
+
+    if (res.ok && data.authenticated) {
+      showApp();
+    } else {
+      errorEl.textContent = data.message || 'Usuario o contraseña incorrectos';
     }
-    showApp();
-  } catch {
-    document.getElementById('l-err').textContent = 'Error de conexión con el servidor';
+  } catch (error) {
+    errorEl.textContent = 'Error de conexión con el servidor de autenticación';
   }
 }
 
@@ -829,7 +841,6 @@ async function handlePublish() {
   const nets = activeNets();
   if (!nets.length) { toast('⚠️ Selecciona al menos una red'); return; }
 
-  // Build form data for real API
   const fd = new FormData();
   fd.append('name',        name);
   fd.append('description', document.getElementById('p-desc').value);
@@ -850,7 +861,6 @@ async function handlePublish() {
     nets: [...nets], date: new Date().toLocaleDateString('es-ES')
   };
 
-  // Try real API; if not available, simulate
   try {
     const res = await fetch('/api/products', { method: 'POST', body: fd });
     if (res.ok) {
@@ -861,7 +871,6 @@ async function handlePublish() {
     }
   } catch (_) {}
 
-  // Demo mode: simulate success
   saveLocalProduct(product, nets);
   showSuccess(name, nets);
 }
@@ -905,7 +914,6 @@ async function loadProducts() {
 }
 
 function renderCatalog(cat) {
-  // Build category filters
   const cats = [...new Set(S.products.map(p => p.category).filter(Boolean))];
   const fb = document.getElementById('filter-bar');
   fb.innerHTML = '<button class="f-chip' + (cat==='all'?' active':'') + '" onclick="filterCat(this,\'all\')">Todo</button>' +
