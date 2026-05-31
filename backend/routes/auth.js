@@ -7,7 +7,7 @@ const router   = express.Router();
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   const validUser = username === process.env.ADMIN_USER;
-  const validPass = password === process.env.ADMIN_PASS; // En producción usa hash bcrypt
+  const validPass = password === process.env.ADMIN_PASS;
 
   if (!validUser || !validPass) {
     return res.status(401).json({ error: 'Credenciales incorrectas' });

@@ -1,25 +1,20 @@
-// backend/social.js — Servicio de publicación en redes sociales
+// backend/social.js — Servicio de publicación en redes sociales (Adaptado para Turso)
 const fs   = require('fs');
 const path = require('path');
 const axios = require('axios');
 const fetch = require('node-fetch');
 const FormData = require('form-data');
 
-// ─────────────────────────────────────────────────────────
-// INSTAGRAM  (Meta Graph API)
-// ─────────────────────────────────────────────────────────
 async function postInstagram({ imageUrl, caption }) {
   const { INSTAGRAM_ACCESS_TOKEN: token, INSTAGRAM_ACCOUNT_ID: accountId } = process.env;
   if (!token || !accountId) throw new Error('Credenciales de Instagram no configuradas');
 
-  // 1. Crear contenedor de media
   const containerRes = await axios.post(
     `https://graph.instagram.com/v19.0/${accountId}/media`,
     { image_url: imageUrl, caption, access_token: token }
   );
   const creationId = containerRes.data.id;
 
-  // 2. Publicar el contenedor
   const publishRes = await axios.post(
     `https://graph.instagram.com/v19.0/${accountId}/media_publish`,
     { creation_id: creationId, access_token: token }
@@ -27,9 +22,6 @@ async function postInstagram({ imageUrl, caption }) {
   return publishRes.data.id;
 }
 
-// ─────────────────────────────────────────────────────────
-// FACEBOOK  (Meta Graph API)
-// ─────────────────────────────────────────────────────────
 async function postFacebook({ imageUrl, caption }) {
   const { FACEBOOK_ACCESS_TOKEN: token, FACEBOOK_PAGE_ID: pageId } = process.env;
   if (!token || !pageId) throw new Error('Credenciales de Facebook no configuradas');
@@ -41,15 +33,10 @@ async function postFacebook({ imageUrl, caption }) {
   return res.data.id;
 }
 
-// ─────────────────────────────────────────────────────────
-// TWITTER / X  (API v2 con OAuth 1.0a)
-// ─────────────────────────────────────────────────────────
 async function postTwitter({ imagePath, caption }) {
   const { TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_SECRET } = process.env;
   if (!TWITTER_API_KEY) throw new Error('Credenciales de Twitter no configuradas');
 
-  // Para firmar las peticiones OAuth 1.0a usamos la librería oauth-1.0a
-  // Si no está disponible, lanzamos un error descriptivo
   let OAuth;
   try { OAuth = require('oauth-1.0a'); } catch {
     throw new Error('Instala oauth-1.0a: npm install oauth-1.0a crypto');
@@ -64,7 +51,6 @@ async function postTwitter({ imagePath, caption }) {
   });
   const token = { key: TWITTER_ACCESS_TOKEN, secret: TWITTER_ACCESS_SECRET };
 
-  // 1. Subir imagen a Twitter Media Upload
   const imageData = fs.readFileSync(imagePath).toString('base64');
   const uploadUrl = 'https://upload.twitter.com/1.1/media/upload.json';
   const authUpload = oauth.toHeader(oauth.authorize({ url: uploadUrl, method: 'POST' }, token));
@@ -78,7 +64,6 @@ async function postTwitter({ imagePath, caption }) {
   const uploadJson = await uploadRes.json();
   const mediaId = uploadJson.media_id_string;
 
-  // 2. Crear tweet con la imagen
   const tweetUrl = 'https://api.twitter.com/2/tweets';
   const body = JSON.stringify({
     text: caption.substring(0, 280),
@@ -94,14 +79,10 @@ async function postTwitter({ imagePath, caption }) {
   return tweetJson.data?.id;
 }
 
-// ─────────────────────────────────────────────────────────
-// TIKTOK  (Content Posting API)
-// ─────────────────────────────────────────────────────────
 async function postTikTok({ imagePaths, caption }) {
   const { TIKTOK_ACCESS_TOKEN: token } = process.env;
   if (!token) throw new Error('Credenciales de TikTok no configuradas');
 
-  // TikTok Photo Post API (carrusel de fotos)
   const res = await axios.post(
     'https://open.tiktokapis.com/v2/post/publish/content/init/',
     {
@@ -119,15 +100,8 @@ async function postTikTok({ imagePaths, caption }) {
   return res.data.data?.publish_id;
 }
 
-// ─────────────────────────────────────────────────────────
-// PUBLICADOR PRINCIPAL
-// ─────────────────────────────────────────────────────────
 /**
- * Publica un producto en las redes seleccionadas.
- * @param {object} product  — registro de la DB (con images como array)
- * @param {string[]} networks — ['instagram','facebook','twitter','tiktok']
- * @param {object} db       — instancia de better-sqlite3
- * @returns {object[]} resultados por red
+ * Publica un producto en las redes seleccionadas (Adaptado para Turso)
  */
 async function publishToNetworks(product, networks, db) {
   const baseUrl = process.env.PUBLIC_BASE_URL || 'http://localhost:3000';
@@ -135,7 +109,6 @@ async function publishToNetworks(product, networks, db) {
   const firstImageUrl  = images.length ? `${baseUrl}/${images[0]}` : null;
   const firstImagePath = images.length ? path.join(__dirname, '..', images[0]) : null;
 
-  // Construir el caption
   const caption = [
     product.name,
     product.price ? `💰 ${product.price}` : '',
@@ -186,11 +159,19 @@ async function publishToNetworks(product, networks, db) {
       console.error(`[social] Error en ${network}:`, err.message);
     }
 
-    db.prepare(
-      `INSERT INTO social_posts (product_id, network, post_id, status, error_msg, posted_at)
-       VALUES (?, ?, ?, ?, ?, ?)`
-    ).run(row.product_id, row.network, row.post_id || null,
-          row.status, row.error_msg || null, row.posted_at || null);
+    // Adaptado al execute asíncrono de Turso
+    await db.execute({
+      sql: `INSERT INTO social_posts (product_id, network, post_id, status, error_msg, posted_at)
+            VALUES (?, ?, ?, ?, ?, ?)`,
+      args: [
+        row.product_id,
+        row.network,
+        row.post_id || null,
+        row.status,
+        row.error_msg || null,
+        row.posted_at || null
+      ]
+    });
   }
 
   return results;

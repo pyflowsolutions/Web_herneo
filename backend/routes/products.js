@@ -8,13 +8,11 @@ const { publishToNetworks } = require('../social');
 
 const router = express.Router();
 
-// ── Middleware de autenticación simple ───────────────────
 function requireAuth(req, res, next) {
   if (req.session?.authenticated) return next();
   res.status(401).json({ error: 'No autorizado' });
 }
 
-// ── Configuración de subida de imágenes ─────────────────
 const UPLOAD_DIR = path.join(__dirname, '..', '..', 'frontend', 'public', 'uploads');
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
@@ -29,27 +27,24 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 15 * 1024 * 1024 }, // 15 MB
+  limits: { fileSize: 15 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) cb(null, true);
     else cb(new Error('Solo se permiten imágenes'));
   },
 });
 
-// ── Helper para optimizar imágenes con sharp ─────────────
 async function optimizeImage(filePath) {
   const optimized = filePath.replace(/(\.\w+)$/, '-opt.webp');
   await sharp(filePath)
     .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
     .webp({ quality: 85 })
     .toFile(optimized);
-  fs.unlinkSync(filePath); // elimina el original
+  fs.unlinkSync(filePath);
   return optimized;
 }
 
-// ─────────────────────────────────────────────────────────
 // GET /api/products — Listar productos
-// ─────────────────────────────────────────────────────────
 router.get('/', async (req, res) => {
   const db = req.app.locals.db;
   const { category, status = 'published', page = 1, limit = 20 } = req.query;
@@ -76,9 +71,7 @@ router.get('/', async (req, res) => {
     const totalRes = await db.execute({ sql: countSql, args: countParams });
     const total = totalRes.rows[0]?.n || 0;
 
-    products.forEach(p => { 
-      p.images = JSON.parse(p.images || '[]'); 
-    });
+    products.forEach(p => { p.images = JSON.parse(p.images || '[]'); });
 
     res.json({ products, total, page: Number(page), limit: Number(limit) });
   } catch (err) {
@@ -86,9 +79,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────
 // GET /api/products/:id — Detalle de producto
-// ─────────────────────────────────────────────────────────
 router.get('/:id', async (req, res) => {
   const db = req.app.locals.db;
   
@@ -98,7 +89,6 @@ router.get('/:id', async (req, res) => {
       args: [req.params.id]
     });
     const product = productRes.rows[0];
-    
     if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
 
     product.images = JSON.parse(product.images || '[]');
@@ -115,9 +105,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────
 // POST /api/products — Crear y publicar producto
-// ─────────────────────────────────────────────────────────
 router.post('/', requireAuth, upload.array('images', 10), async (req, res) => {
   const db = req.app.locals.db;
 
@@ -128,7 +116,6 @@ router.post('/', requireAuth, upload.array('images', 10), async (req, res) => {
       return res.status(400).json({ error: 'El nombre del plato es obligatorio' });
     }
 
-    // Optimizar imágenes y guardar ruta relativa
     const imagePaths = [];
     for (const file of (req.files || [])) {
       try {
@@ -139,7 +126,6 @@ router.post('/', requireAuth, upload.array('images', 10), async (req, res) => {
       }
     }
 
-    // Parsear redes seleccionadas de manera segura
     let selectedNetworks = [];
     if (networks) {
       selectedNetworks = Array.isArray(networks) ? networks : [networks];
@@ -148,7 +134,6 @@ router.post('/', requireAuth, upload.array('images', 10), async (req, res) => {
     const isScheduled = !!scheduled_at;
     const status = isScheduled ? 'scheduled' : 'published';
 
-    // Insertar producto en Turso
     const result = await db.execute({
       sql: `INSERT INTO products (name, description, price, category, hashtags, images, status, scheduled_at, published_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -165,16 +150,13 @@ router.post('/', requireAuth, upload.array('images', 10), async (req, res) => {
       ]
     });
 
-    // En @libsql/client, lastInsertRowid puede ser un BigInt, lo convertimos a Number/String de forma segura
     const productId = result.lastInsertRowid ? result.lastInsertRowid.toString() : null;
-    
     const productRes = await db.execute({
       sql: 'SELECT * FROM products WHERE id = ?',
       args: [productId]
     });
     const product = productRes.rows[0];
 
-    // Publicar en redes inmediatamente (si no está programado)
     let socialResults = [];
     if (!isScheduled && selectedNetworks.length > 0) {
       socialResults = await publishToNetworks(product, selectedNetworks, db);
@@ -192,9 +174,7 @@ router.post('/', requireAuth, upload.array('images', 10), async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────
 // PUT /api/products/:id — Actualizar producto
-// ─────────────────────────────────────────────────────────
 router.put('/:id', requireAuth, async (req, res) => {
   const db = req.app.locals.db;
   const { name, description, price, category, hashtags } = req.body;
@@ -225,16 +205,13 @@ router.put('/:id', requireAuth, async (req, res) => {
     });
     const updated = updatedRes.rows[0];
     updated.images = JSON.parse(updated.images || '[]');
-    
     res.json({ ok: true, product: updated });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ─────────────────────────────────────────────────────────
 // DELETE /api/products/:id — Eliminar producto
-// ─────────────────────────────────────────────────────────
 router.delete('/:id', requireAuth, async (req, res) => {
   const db = req.app.locals.db;
 
@@ -256,16 +233,13 @@ router.delete('/:id', requireAuth, async (req, res) => {
       sql: 'DELETE FROM products WHERE id = ?',
       args: [req.params.id]
     });
-    
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ─────────────────────────────────────────────────────────
 // GET /api/products/:id/social — Estado en redes sociales
-// ─────────────────────────────────────────────────────────
 router.get('/:id/social', requireAuth, async (req, res) => {
   const db = req.app.locals.db;
   try {
@@ -279,9 +253,7 @@ router.get('/:id/social', requireAuth, async (req, res) => {
   }
 });
 
-// ─────────────────────────────────────────────────────────
 // POST /api/products/:id/republish — Republicar en una red
-// ─────────────────────────────────────────────────────────
 router.post('/:id/republish', requireAuth, async (req, res) => {
   const db = req.app.locals.db;
   const { networks } = req.body;
