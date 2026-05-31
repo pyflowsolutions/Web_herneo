@@ -1,8 +1,8 @@
-// backend/server.js — Servidor principal Express (Adaptado para Turso)
+// backend/server.js — Servidor principal Express (Estructura Raíz Simplificada)
 require('dotenv').config();
 
 const express        = require('express');
-const session        = require('express-session');
+const cookieSession  = require('cookie-session'); // Cambiado a cookie-session para compatibilidad con Vercel
 const path           = require('path');
 const db             = require('./db');
 
@@ -20,27 +20,26 @@ app.locals.db = db;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'dev-secret-change-in-prod',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }, // 24h
+// Configuración de sesión segura e independiente de la memoria RAM del servidor
+app.use(cookieSession({
+  name: 'session',
+  keys: [process.env.SESSION_SECRET || 'dev-secret-change-in-prod'],
+  maxAge: 24 * 60 * 60 * 1000 // 24 horas
 }));
 
-// ── Archivos estáticos (imágenes subidas, CSS, JS) ──────
-app.use(express.static(path.join(__dirname, '..', 'frontend', 'public')));
+// ── Archivos estáticos desde la RAÍZ (index, admin, carpetas de estilos/uploads) ──
+app.use(express.static(path.join(__dirname, '..')));
 
 // ── API Routes ───────────────────────────────────────────
 app.use('/api/products', productsRouter);
 app.use('/api/auth',     authRouter);
 app.use('/api/stats',    statsRouter);
 
-// ── Página pública del restaurante ──────────────────────
+// ── Servir HTMLs desde la Raíz del proyecto ──────────────
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'frontend', 'public', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
-// ── ENRUTAMIENTO CORREGIDO PARA ADMIN (Lee directamente desde la raíz del repositorio) ──
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'admin.html'));
 });
@@ -63,7 +62,6 @@ setInterval(async () => {
   const { publishToNetworks } = require('./social');
   const now = new Date().toISOString();
   try {
-    // Consulta asíncrona para obtener los productos pendientes
     const dueRes = await db.execute({
       sql: "SELECT * FROM products WHERE status = 'scheduled' AND scheduled_at <= ?",
       args: [now]
@@ -72,8 +70,6 @@ setInterval(async () => {
 
     for (const product of due) {
       console.log(`[scheduler] Publicando plato programado: ${product.name}`);
-      
-      // Obtener la configuración de redes de forma asíncrona
       const settingsRes = await db.execute({
         sql: "SELECT value FROM settings WHERE key='active_networks'",
         args: []
@@ -81,10 +77,7 @@ setInterval(async () => {
       const settingsRow = settingsRes.rows[0];
       const nets = JSON.parse(settingsRow?.value || '["telegram"]');
       
-      // Publicar en las redes
       await publishToNetworks(product, nets, db);
-      
-      // Actualizar el estado del producto en Turso
       await db.execute({
         sql: "UPDATE products SET status='published', published_at=? WHERE id=?",
         args: [now, product.id]
@@ -93,17 +86,15 @@ setInterval(async () => {
   } catch (err) {
     console.error('[scheduler-error]', err.message);
   }
-}, 60 * 1000); // Comprueba cada minuto
+}, 60 * 1000);
 
-// ── Arranque del servidor local (Solo si no estamos en Vercel) ──
+// Arranque del servidor local
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
     console.log(`\n🍽️  Restaurante Social Publisher Local`);
     console.log(`   Sitio web:     http://localhost:${PORT}`);
     console.log(`   Panel admin:   http://localhost:${PORT}/admin`);
-    console.log(`   API REST:      http://localhost:${PORT}/api/products\n`);
   });
 }
 
-// ── EXPORTACIÓN OBLIGATORIA PARA VERCEL ──────────────────
 module.exports = app;

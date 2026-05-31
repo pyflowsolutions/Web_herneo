@@ -1,9 +1,39 @@
 {
   "version": 2,
-  "rewrites": [
+  "builds": [
     {
-      "source": "/(.*)",
-      "destination": "/backend/server.js"
+      "src": "backend/server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/admin",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/admin.html",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/login.html",
+      "dest": "login.html"
+    },
+    {
+      "src": "/index.html",
+      "dest": "index.html"
+    },
+    {
+      "src": "/uploads/(.*)",
+      "dest": "uploads/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "$1"
     }
   ]
 }

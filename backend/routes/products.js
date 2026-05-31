@@ -13,7 +13,8 @@ function requireAuth(req, res, next) {
   res.status(401).json({ error: 'No autorizado' });
 }
 
-const UPLOAD_DIR = path.join(__dirname, '..', '..', 'frontend', 'public', 'uploads');
+// Cambia la línea original por esta nueva ruta hacia la raíz:
+const UPLOAD_DIR = path.join(__dirname, '..', '..', 'uploads');
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const storage = multer.diskStorage({
