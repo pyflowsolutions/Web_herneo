@@ -20,7 +20,7 @@
       "dest": "backend/server.js"
     },
     {
-      "src": "/login.html",
+      "src": "./login.html",
       "status": 200,
       "dest": "login.html"
     },
