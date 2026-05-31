@@ -3,7 +3,10 @@
   "builds": [
     {
       "src": "backend/server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["backend/**"]
+      }
     }
   ],
   "routes": [
@@ -21,11 +24,11 @@
     },
     {
       "src": "/login.html",
-      "dest": "login.html"
+      "dest": "frontend/login.html"
     },
     {
       "src": "/index.html",
-      "dest": "index.html"
+      "dest": "frontend/index.html"
     },
     {
       "src": "/uploads/(.*)",
@@ -33,7 +36,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "$1"
+      "dest": "frontend/$1"
     }
   ]
 }
