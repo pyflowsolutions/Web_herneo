@@ -5,13 +5,17 @@
       "src": "backend/server.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["backend/**"]
+        "includeFiles": ["backend/**", "frontend/**", "*.html"]
       }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
+      "dest": "backend/server.js"
+    },
+    {
+      "src": "/login.html",
       "dest": "backend/server.js"
     },
     {
@@ -23,20 +27,12 @@
       "dest": "backend/server.js"
     },
     {
-      "src": "/login.html",
-      "dest": "frontend/login.html"
-    },
-    {
-      "src": "/index.html",
-      "dest": "frontend/index.html"
-    },
-    {
       "src": "/uploads/(.*)",
       "dest": "uploads/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "frontend/$1"
+      "dest": "backend/server.js"
     }
   ]
 }
