@@ -1,16 +1,26 @@
-// backend/server.js — Servidor principal Express (Estructura Sincronizada con Frontend y Adaptada para Vercel)
+// backend/server.js
 require('dotenv').config();
+const express = require('express');
+const cookieSession = require('cookie-session');
+const path = require('path');
 
-const express        = require('express');
-const cookieSession  = require('cookie-session'); // Cambiado a cookie-session para compatibilidad con Vercel
-const path           = require('path');
-const db             = require('./db');
+// Importar DB de forma condicional
+let db;
+try {
+  db = require('./db');
+} catch (error) {
+  console.warn('[Server] DB no disponible:', error.message);
+  db = {
+    execute: async () => ({ rows: [] }),
+    batch: async () => {}
+  };
+}
 
 const productsRouter = require('./routes/products');
-const authRouter     = require('./routes/auth');
-const statsRouter    = require('./routes/stats');
+const authRouter = require('./routes/auth');
+const statsRouter = require('./routes/stats');
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ── Compartir DB con rutas ───────────────────────────────
@@ -20,28 +30,27 @@ app.locals.db = db;
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Configuración de sesión segura e independiente de la memoria RAM del servidor
+// Configuración de sesión
 app.use(cookieSession({
   name: 'session',
   keys: [process.env.SESSION_SECRET || 'dev-secret-change-in-prod'],
   maxAge: 24 * 60 * 60 * 1000 // 24 horas
 }));
 
-// ── Archivos estáticos apuntando a la carpeta frontend y raíz ──
+// ── Archivos estáticos ────
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 app.use(express.static(path.join(__dirname, '..')));
 
 // ── API Routes ───────────────────────────────────────────
 app.use('/api/products', productsRouter);
-app.use('/api/auth',     authRouter);
-app.use('/api/stats',    statsRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/stats', statsRouter);
 
-// ── Servir HTMLs mapeados correctamente desde la carpeta frontend ──
+// ── Servir HTMLs ────
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
 });
 
-// Ruta explícita para evitar errores 404 en la interfaz de login
 app.get('/login.html', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'login.html'));
 });
@@ -63,46 +72,20 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || 'Error interno del servidor' });
 });
 
-// ── Tarea programada: publicar productos programados (Desactivado en Vercel Serverless para evitar el Crash 500) ──
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-  setInterval(async () => {
-    const { publishToNetworks } = require('./social');
-    const now = new Date().toISOString();
-    try {
-      const dueRes = await db.execute({
-        sql: "SELECT * FROM products WHERE status = 'scheduled' AND scheduled_at <= ?",
-        args: [now]
-      });
-      const due = dueRes.rows;
+// ── Exportar para Vercel (Serverless) ───────────────────
+module.exports = app;
 
-      for (const product of due) {
-        console.log(`[scheduler] Publicando plato programado: ${product.name}`);
-        const settingsRes = await db.execute({
-          sql: "SELECT value FROM settings WHERE key='active_networks'",
-          args: []
-        });
-        const settingsRow = settingsRes.rows[0];
-        const nets = JSON.parse(settingsRow?.value || '["telegram"]');
-        
-        await publishToNetworks(product, nets, db);
-        await db.execute({
-          sql: "UPDATE products SET status='published', published_at=? WHERE id=?",
-          args: [now, product.id]
-        });
-      }
-    } catch (err) {
-      console.error('[scheduler-error]', err.message);
-    }
-  }, 60 * 1000);
-}
-
-// Arranque del servidor local (Solo se ejecuta localmente, Vercel usa el module.exports externo)
+// ── Solo escuchar en local (NO en Vercel) ───────────────
 if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  // Inicializar DB en local
+  if (db && typeof db.batch === 'function') {
+    const { initDB } = require('./db');
+    initDB();
+  }
+  
   app.listen(PORT, () => {
-    console.log(`\n🍽️  Restaurante Social Publisher Local`);
-    console.log(`   Sitio web:     http://localhost:${PORT}`);
-    console.log(`   Panel admin:   http://localhost:${PORT}/admin`);
+    console.log(`\n🍽️ Restaurante Social Publisher Local`);
+    console.log(`Sitio web: http://localhost:${PORT}`);
+    console.log(`Panel admin: http://localhost:${PORT}/admin`);
   });
 }
-
-module.exports = app;
