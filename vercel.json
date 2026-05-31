@@ -12,11 +12,11 @@
       "dest": "backend/server.js"
     },
     {
-      "src": "/admin",
+      "src": "/admin.html",
       "dest": "backend/server.js"
     },
     {
-      "src": "/admin.html",
+      "src": "/admin",
       "dest": "backend/server.js"
     },
     {
