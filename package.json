@@ -1,28 +1,22 @@
 {
-  "name": "horneo-social-publisher",
+  "name": "restaurante-social-publisher",
   "version": "1.0.0",
-  "description": "Plataforma para publicar Reposteria en el sitio web y redes sociales",
+  "description": "",
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "multer": "^1.4.5-lts.1",
-    "better-sqlite3": "^9.4.3",
-    "dotenv": "^16.4.1",
-    "express-session": "^1.17.3",
+    "@libsql/client": "^0.6.0",
+    "axios": "^1.6.8",
     "bcryptjs": "^2.4.3",
-    "sharp": "^0.33.2",
+    "cookie-session": "^2.1.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
     "form-data": "^4.0.0",
+    "multer": "^1.4.5-lts.1",
     "node-fetch": "^2.7.0",
-    "axios": "^1.6.7"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.3"
-  },
-  "engines": {
-    "node": "20.x"
+    "sharp": "^0.33.3"
   }
 }
