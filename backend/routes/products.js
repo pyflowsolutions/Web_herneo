@@ -1,4 +1,4 @@
-// backend/routes/products.js — API REST para productos
+// backend/routes/products.js — API REST para productos (Adaptado para Turso)
 const express = require('express');
 const multer  = require('multer');
 const path    = require('path');
@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
   filename: (req, file, cb) => {
     const ext  = path.extname(file.originalname).toLowerCase() || '.jpg';
-    const name = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`const authRouter     = require('./routes/auth');;
+    const name = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
     cb(null, name);
   },
 });
@@ -50,7 +50,7 @@ async function optimizeImage(filePath) {
 // ─────────────────────────────────────────────────────────
 // GET /api/products — Listar productos
 // ─────────────────────────────────────────────────────────
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const db = req.app.locals.db;
   const { category, status = 'published', page = 1, limit = 20 } = req.query;
   const offset = (Number(page) - 1) * Number(limit);
@@ -66,30 +66,53 @@ router.get('/', (req, res) => {
   sql += ' ORDER BY published_at DESC LIMIT ? OFFSET ?';
   params.push(Number(limit), offset);
 
-  const products = db.prepare(sql).all(...params);
-  const total    = db.prepare(
-    `SELECT COUNT(*) as n FROM products WHERE status = ?${category ? ' AND category = ?' : ''}`
-  ).get(...(category ? [status, category] : [status])).n;
+  try {
+    const productsRes = await db.execute({ sql, args: params });
+    const products = productsRes.rows;
 
-  products.forEach(p => { p.images = JSON.parse(p.images || '[]'); });
+    let countSql = `SELECT COUNT(*) as n FROM products WHERE status = ?${category ? ' AND category = ?' : ''}`;
+    let countParams = category ? [status, category] : [status];
 
-  res.json({ products, total, page: Number(page), limit: Number(limit) });
+    const totalRes = await db.execute({ sql: countSql, args: countParams });
+    const total = totalRes.rows[0]?.n || 0;
+
+    products.forEach(p => { 
+      p.images = JSON.parse(p.images || '[]'); 
+    });
+
+    res.json({ products, total, page: Number(page), limit: Number(limit) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ─────────────────────────────────────────────────────────
 // GET /api/products/:id — Detalle de producto
 // ─────────────────────────────────────────────────────────
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   const db = req.app.locals.db;
-  const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-  if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+  
+  try {
+    const productRes = await db.execute({
+      sql: 'SELECT * FROM products WHERE id = ?',
+      args: [req.params.id]
+    });
+    const product = productRes.rows[0];
+    
+    if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
 
-  product.images = JSON.parse(product.images || '[]');
-  const posts = db.prepare(
-    'SELECT network, status, error_msg, posted_at FROM social_posts WHERE product_id = ?'
-  ).all(product.id);
+    product.images = JSON.parse(product.images || '[]');
+    
+    const postsRes = await db.execute({
+      sql: 'SELECT network, status, error_msg, posted_at FROM social_posts WHERE product_id = ?',
+      args: [product.id]
+    });
+    const posts = postsRes.rows;
 
-  res.json({ ...product, social_posts: posts });
+    res.json({ ...product, social_posts: posts });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ─────────────────────────────────────────────────────────
@@ -116,7 +139,7 @@ router.post('/', requireAuth, upload.array('images', 10), async (req, res) => {
       }
     }
 
-    // Parsear redes seleccionadas de manera segura (maneja strings únicos o arrays)
+    // Parsear redes seleccionadas de manera segura
     let selectedNetworks = [];
     if (networks) {
       selectedNetworks = Array.isArray(networks) ? networks : [networks];
@@ -125,24 +148,31 @@ router.post('/', requireAuth, upload.array('images', 10), async (req, res) => {
     const isScheduled = !!scheduled_at;
     const status = isScheduled ? 'scheduled' : 'published';
 
-    // Insertar producto en la Base de Datos SQLite
-    const result = db.prepare(`
-      INSERT INTO products (name, description, price, category, hashtags, images, status, scheduled_at, published_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      name.trim(),
-      description?.trim() || null,
-      price?.trim() || null,
-      category?.trim() || null,
-      hashtags?.trim() || null,
-      JSON.stringify(imagePaths),
-      status,
-      scheduled_at || null,
-      isScheduled ? null : new Date().toISOString()
-    );
+    // Insertar producto en Turso
+    const result = await db.execute({
+      sql: `INSERT INTO products (name, description, price, category, hashtags, images, status, scheduled_at, published_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        name.trim(),
+        description?.trim() || null,
+        price?.trim() || null,
+        category?.trim() || null,
+        hashtags?.trim() || null,
+        JSON.stringify(imagePaths),
+        status,
+        scheduled_at || null,
+        isScheduled ? null : new Date().toISOString()
+      ]
+    });
 
-    const productId = result.lastInsertRowid;
-    const product   = db.prepare('SELECT * FROM products WHERE id = ?').get(productId);
+    // En @libsql/client, lastInsertRowid puede ser un BigInt, lo convertimos a Number/String de forma segura
+    const productId = result.lastInsertRowid ? result.lastInsertRowid.toString() : null;
+    
+    const productRes = await db.execute({
+      sql: 'SELECT * FROM products WHERE id = ?',
+      args: [productId]
+    });
+    const product = productRes.rows[0];
 
     // Publicar en redes inmediatamente (si no está programado)
     let socialResults = [];
@@ -152,7 +182,7 @@ router.post('/', requireAuth, upload.array('images', 10), async (req, res) => {
 
     res.json({
       ok: true,
-      product: { ...product, images: JSON.parse(product.images) },
+      product: { ...product, images: JSON.parse(product.images || '[]') },
       social: socialResults,
     });
 
@@ -165,57 +195,88 @@ router.post('/', requireAuth, upload.array('images', 10), async (req, res) => {
 // ─────────────────────────────────────────────────────────
 // PUT /api/products/:id — Actualizar producto
 // ─────────────────────────────────────────────────────────
-router.put('/:id', requireAuth, (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
   const db = req.app.locals.db;
   const { name, description, price, category, hashtags } = req.body;
 
-  const existing = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-  if (!existing) return res.status(404).json({ error: 'Producto no encontrado' });
+  try {
+    const existingRes = await db.execute({
+      sql: 'SELECT * FROM products WHERE id = ?',
+      args: [req.params.id]
+    });
+    const existing = existingRes.rows[0];
+    if (!existing) return res.status(404).json({ error: 'Producto no encontrado' });
 
-  db.prepare(`
-    UPDATE products SET name=?, description=?, price=?, category=?, hashtags=?
-    WHERE id=?
-  `).run(
-    name || existing.name,
-    description ?? existing.description,
-    price ?? existing.price,
-    category ?? existing.category,
-    hashtags ?? existing.hashtags,
-    req.params.id
-  );
+    await db.execute({
+      sql: `UPDATE products SET name=?, description=?, price=?, category=?, hashtags=? WHERE id=?`,
+      args: [
+        name || existing.name,
+        description ?? existing.description,
+        price ?? existing.price,
+        category ?? existing.category,
+        hashtags ?? existing.hashtags,
+        req.params.id
+      ]
+    });
 
-  const updated = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-  updated.images = JSON.parse(updated.images || '[]');
-  res.json({ ok: true, product: updated });
+    const updatedRes = await db.execute({
+      sql: 'SELECT * FROM products WHERE id = ?',
+      args: [req.params.id]
+    });
+    const updated = updatedRes.rows[0];
+    updated.images = JSON.parse(updated.images || '[]');
+    
+    res.json({ ok: true, product: updated });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ─────────────────────────────────────────────────────────
 // DELETE /api/products/:id — Eliminar producto
 // ─────────────────────────────────────────────────────────
-router.delete('/:id', requireAuth, (req, res) => {
+router.delete('/:id', requireAuth, async (req, res) => {
   const db = req.app.locals.db;
-  const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-  if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
 
-  const images = JSON.parse(product.images || '[]');
-  images.forEach(img => {
-    const full = path.join(__dirname, '..', '..', 'frontend', 'public', img);
-    if (fs.existsSync(full)) fs.unlinkSync(full);
-  });
+  try {
+    const productRes = await db.execute({
+      sql: 'SELECT * FROM products WHERE id = ?',
+      args: [req.params.id]
+    });
+    const product = productRes.rows[0];
+    if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
 
-  db.prepare('DELETE FROM products WHERE id = ?').run(req.params.id);
-  res.json({ ok: true });
+    const images = JSON.parse(product.images || '[]');
+    images.forEach(img => {
+      const full = path.join(__dirname, '..', '..', 'frontend', 'public', img);
+      if (fs.existsSync(full)) fs.unlinkSync(full);
+    });
+
+    await db.execute({
+      sql: 'DELETE FROM products WHERE id = ?',
+      args: [req.params.id]
+    });
+    
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ─────────────────────────────────────────────────────────
 // GET /api/products/:id/social — Estado en redes sociales
 // ─────────────────────────────────────────────────────────
-router.get('/:id/social', requireAuth, (req, res) => {
+router.get('/:id/social', requireAuth, async (req, res) => {
   const db = req.app.locals.db;
-  const posts = db.prepare(
-    'SELECT * FROM social_posts WHERE product_id = ? ORDER BY created_at DESC'
-  ).all(req.params.id);
-  res.json({ posts });
+  try {
+    const postsRes = await db.execute({
+      sql: 'SELECT * FROM social_posts WHERE product_id = ? ORDER BY created_at DESC',
+      args: [req.params.id]
+    });
+    res.json({ posts: postsRes.rows });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ─────────────────────────────────────────────────────────
@@ -226,11 +287,19 @@ router.post('/:id/republish', requireAuth, async (req, res) => {
   const { networks } = req.body;
   if (!networks?.length) return res.status(400).json({ error: 'Especifica las redes a republicar' });
 
-  const product = db.prepare('SELECT * FROM products WHERE id = ?').get(req.params.id);
-  if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+  try {
+    const productRes = await db.execute({
+      sql: 'SELECT * FROM products WHERE id = ?',
+      args: [req.params.id]
+    });
+    const product = productRes.rows[0];
+    if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
 
-  const results = await publishToNetworks(product, networks, db);
-  res.json({ ok: true, social: results });
+    const results = await publishToNetworks(product, networks, db);
+    res.json({ ok: true, social: results });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;
