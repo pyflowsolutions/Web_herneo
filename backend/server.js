@@ -89,3 +89,14 @@ if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
     console.log(`Panel admin: http://localhost:${PORT}/admin`);
   });
 }
+// Al final de server.js, después de module.exports = app:
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  // Solo en local: inicializar DB y arrancar servidor
+  if (typeof db.initDB === 'function') {
+    db.initDB();
+  }
+  app.listen(PORT, () => {
+    console.log(`🍽️ Servidor local en http://localhost:${PORT}`);
+  });
+}
+// En Vercel: NO llamar a listen(), solo exportar app

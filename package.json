@@ -1,7 +1,6 @@
 {
   "name": "restaurante-social-publisher",
   "version": "1.0.0",
-  "description": "",
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
