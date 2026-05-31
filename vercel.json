@@ -21,10 +21,12 @@
     },
     {
       "src": "/login.html",
+      "status": 200,
       "dest": "login.html"
     },
     {
       "src": "/index.html",
+      "status": 200,
       "dest": "index.html"
     },
     {
