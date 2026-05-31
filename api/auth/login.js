@@ -1,4 +1,4 @@
-// api/auth/login.js - Versión CommonJS para Vercel
+// api/auth/login.js - CommonJS para Vercel
 module.exports = function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Método no permitido' });

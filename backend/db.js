@@ -1,13 +1,15 @@
 // backend/db.js - Versión segura para Vercel
 const { createClient } = require('@libsql/client');
 
-// Validar variables antes de crear el cliente
+// Validar variables ANTES de crear el cliente
 if (!process.env.TURSO_DATABASE_URL || !process.env.TURSO_AUTH_TOKEN) {
   console.warn('[Turso DB] Variables de entorno no configuradas. Usando cliente mock.');
-  module.exports = {
+  const mockDb = {
     execute: async () => ({ rows: [] }),
     batch: async () => [],
   };
+  mockDb.initDB = async () => {};
+  module.exports = mockDb;
   return;
 }
 
@@ -44,11 +46,10 @@ async function initDB() {
   }
 }
 
-// Solo inicializar en entorno local, NO en Vercel serverless
+// Solo inicializar en local, NO en Vercel serverless
 if (!process.env.VERCEL) {
   initDB();
 }
 
-// Exportar también initDB para uso manual en server.js si es necesario
+db.initDB = initDB;
 module.exports = db;
-module.exports.initDB = initDB;
