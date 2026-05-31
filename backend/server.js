@@ -1,4 +1,4 @@
-// backend/server.js — Servidor principal Express (Estructura Sincronizada con Frontend)
+// backend/server.js — Servidor principal Express (Estructura Sincronizada con Frontend y Adaptada para Vercel)
 require('dotenv').config();
 
 const express        = require('express');
@@ -41,6 +41,11 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
 });
 
+// Ruta explícita para evitar errores 404 en la interfaz de login
+app.get('/login.html', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'login.html'));
+});
+
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'admin.html'));
 });
@@ -58,39 +63,41 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || 'Error interno del servidor' });
 });
 
-// ── Tarea programada: publicar productos programados ────
-setInterval(async () => {
-  const { publishToNetworks } = require('./social');
-  const now = new Date().toISOString();
-  try {
-    const dueRes = await db.execute({
-      sql: "SELECT * FROM products WHERE status = 'scheduled' AND scheduled_at <= ?",
-      args: [now]
-    });
-    const due = dueRes.rows;
+// ── Tarea programada: publicar productos programados (Desactivado en Vercel Serverless para evitar el Crash 500) ──
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  setInterval(async () => {
+    const { publishToNetworks } = require('./social');
+    const now = new Date().toISOString();
+    try {
+      const dueRes = await db.execute({
+        sql: "SELECT * FROM products WHERE status = 'scheduled' AND scheduled_at <= ?",
+        args: [now]
+      });
+      const due = dueRes.rows;
 
-    for (const product of due) {
-      console.log(`[scheduler] Publicando plato programado: ${product.name}`);
-      const settingsRes = await db.execute({
-        sql: "SELECT value FROM settings WHERE key='active_networks'",
-        args: []
-      });
-      const settingsRow = settingsRes.rows[0];
-      const nets = JSON.parse(settingsRow?.value || '["telegram"]');
-      
-      await publishToNetworks(product, nets, db);
-      await db.execute({
-        sql: "UPDATE products SET status='published', published_at=? WHERE id=?",
-        args: [now, product.id]
-      });
+      for (const product of due) {
+        console.log(`[scheduler] Publicando plato programado: ${product.name}`);
+        const settingsRes = await db.execute({
+          sql: "SELECT value FROM settings WHERE key='active_networks'",
+          args: []
+        });
+        const settingsRow = settingsRes.rows[0];
+        const nets = JSON.parse(settingsRow?.value || '["telegram"]');
+        
+        await publishToNetworks(product, nets, db);
+        await db.execute({
+          sql: "UPDATE products SET status='published', published_at=? WHERE id=?",
+          args: [now, product.id]
+        });
+      }
+    } catch (err) {
+      console.error('[scheduler-error]', err.message);
     }
-  } catch (err) {
-    console.error('[scheduler-error]', err.message);
-  }
-}, 60 * 1000);
+  }, 60 * 1000);
+}
 
-// Arranque del servidor local
-if (process.env.NODE_ENV !== 'production') {
+// Arranque del servidor local (Solo se ejecuta localmente, Vercel usa el module.exports externo)
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`\n🍽️  Restaurante Social Publisher Local`);
     console.log(`   Sitio web:     http://localhost:${PORT}`);
