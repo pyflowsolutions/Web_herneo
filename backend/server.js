@@ -1,4 +1,4 @@
-// backend/server.js — Servidor principal Express (Estructura Raíz Simplificada)
+// backend/server.js — Servidor principal Express (Estructura Sincronizada con Frontend)
 require('dotenv').config();
 
 const express        = require('express');
@@ -27,7 +27,8 @@ app.use(cookieSession({
   maxAge: 24 * 60 * 60 * 1000 // 24 horas
 }));
 
-// ── Archivos estáticos desde la RAÍZ (index, admin, carpetas de estilos/uploads) ──
+// ── Archivos estáticos apuntando a la carpeta frontend y raíz ──
+app.use(express.static(path.join(__dirname, '..', 'frontend')));
 app.use(express.static(path.join(__dirname, '..')));
 
 // ── API Routes ───────────────────────────────────────────
@@ -35,17 +36,17 @@ app.use('/api/products', productsRouter);
 app.use('/api/auth',     authRouter);
 app.use('/api/stats',    statsRouter);
 
-// ── Servir HTMLs desde la Raíz del proyecto ──────────────
+// ── Servir HTMLs mapeados correctamente desde la carpeta frontend ──
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
 });
 
 app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'admin.html'));
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'admin.html'));
 });
 
 app.get('/admin.html', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'admin.html'));
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'admin.html'));
 });
 
 // ── Manejo de errores ────────────────────────────────────
