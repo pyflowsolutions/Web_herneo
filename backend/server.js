@@ -40,7 +40,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'public', 'index.html'));
 });
 
-// ── ENRUTAMIENTO CORREGIDO PARA ADMIN (Lee directamente desde la raíz del repositorio) ──
+// ── ENRUTAMIENTO CORREGIDO PARA ADMIN ────────────────────
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'admin.html'));
 });
@@ -58,35 +58,47 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || 'Error interno del servidor' });
 });
 
-// ── Tarea programada: publicar productos programados ────
-setInterval(async () => {
-  const { publishToNetworks } = require('./social');
-  const now = new Date().toISOString();
-  try {
-    const due = db.prepare(`
-      SELECT * FROM products
-      WHERE status = 'scheduled' AND scheduled_at <= ?
-    `).all(now);
+// ── Tarea programada (Solo ejecutada en Entorno Local) ──
+// NOTA: Vercel detiene los contenedores (Serverless), setInterval NO correrá en producción.
+if (process.env.NODE_ENV !== 'production') {
+  setInterval(async () => {
+    const { publishToNetworks } = require('./social');
+    const now = new Date().toISOString();
+    try {
+      // Adaptado a Turso (Asíncrono con .execute)
+      const dueResult = await db.execute({
+        sql: "SELECT * FROM products WHERE status = 'scheduled' AND scheduled_at <= ?",
+        args: [now]
+      });
+      const due = dueResult.rows;
 
-    for (const product of due) {
-      console.log(`[scheduler] Publicando plato programado: ${product.name}`);
-      const settingsRow = db.prepare("SELECT value FROM settings WHERE key='active_networks'").get();
-      const nets = JSON.parse(settingsRow?.value || '["telegram"]');
-      
-      await publishToNetworks(product, nets, db);
-      db.prepare(
-        "UPDATE products SET status='published', published_at=? WHERE id=?"
-      ).run(now, product.id);
+      for (const product of due) {
+        console.log(`[scheduler] Publicando plato programado: ${product.name}`);
+        
+        const settingsRow = await db.execute({
+          sql: "SELECT value FROM settings WHERE key='active_networks'",
+          args: []
+        });
+        
+        const nets = JSON.parse(settingsRow.rows[0]?.value || '["telegram"]');
+        
+        await publishToNetworks(product, nets, db);
+        
+        await db.execute({
+          sql: "UPDATE products SET status='published', published_at=? WHERE id=?",
+          args: [now, product.id]
+        });
+      }
+    } catch (err) {
+      console.error('[scheduler-error]', err.message);
     }
-  } catch (err) {
-    console.error('[scheduler-error]', err.message);
-  }
-}, 60 * 1000); // Comprueba cada minuto
+  }, 60 * 1000); // Comprueba cada minuto
+}
 
 // ── Arranque del servidor local (Solo si no estamos en Vercel) ──
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
-    console.log(`\n🍽️  Restaurante Social Publisher Local`);
+    console.log(`\n🍽️  Restaurante Social Publisher Local (Conectado a Turso)`);
     console.log(`   Sitio web:     http://localhost:${PORT}`);
     console.log(`   Panel admin:   http://localhost:${PORT}/admin`);
     console.log(`   API REST:      http://localhost:${PORT}/api/products\n`);
