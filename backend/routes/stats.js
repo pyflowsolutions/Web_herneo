@@ -1,4 +1,4 @@
-// backend/routes/stats.js — Estadísticas del panel
+// backend/routes/stats.js — Estadísticas del panel (Adaptado para Turso)
 const express = require('express');
 const router  = express.Router();
 
@@ -8,53 +8,64 @@ function requireAuth(req, res, next) {
 }
 
 // GET /api/stats — Resumen general
-router.get('/', requireAuth, (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   const db = req.app.locals.db;
 
-  const totalProducts = db.prepare(
-    "SELECT COUNT(*) as n FROM products WHERE status = 'published'"
-  ).get().n;
+  try {
+    const totalProductsRes = await db.execute(
+      "SELECT COUNT(*) as n FROM products WHERE status = 'published'"
+    );
+    const totalProducts = totalProductsRes.rows[0]?.n || 0;
 
-  const thisMonth = db.prepare(`
-    SELECT COUNT(*) as n FROM products
-    WHERE status = 'published'
-      AND strftime('%Y-%m', published_at) = strftime('%Y-%m', 'now')
-  `).get().n;
+    const thisMonthRes = await db.execute(`
+      SELECT COUNT(*) as n FROM products
+      WHERE status = 'published'
+        AND strftime('%Y-%m', published_at) = strftime('%Y-%m', 'now')
+    `);
+    const thisMonth = thisMonthRes.rows[0]?.n || 0;
 
-  const byNetwork = db.prepare(`
-    SELECT network, 
-           COUNT(*) as total,
-           SUM(CASE WHEN status='ok' THEN 1 ELSE 0 END) as ok,
-           SUM(CASE WHEN status='error' THEN 1 ELSE 0 END) as errors
-    FROM social_posts GROUP BY network
-  `).all();
+    const byNetworkRes = await db.execute(`
+      SELECT network, 
+             COUNT(*) as total,
+             SUM(CASE WHEN status='ok' THEN 1 ELSE 0 END) as ok,
+             SUM(CASE WHEN status='error' THEN 1 ELSE 0 END) as errors
+      FROM social_posts GROUP BY network
+    `);
+    const byNetwork = byNetworkRes.rows;
 
-  const byCategory = db.prepare(`
-    SELECT category, COUNT(*) as n
-    FROM products WHERE status = 'published'
-    GROUP BY category ORDER BY n DESC
-  `).all();
+    const byCategoryRes = await db.execute(`
+      SELECT category, COUNT(*) as n
+      FROM products WHERE status = 'published'
+      GROUP BY category ORDER BY n DESC
+    `);
+    const byCategory = byCategoryRes.rows;
 
-  const recentActivity = db.prepare(`
-    SELECT sp.network, sp.status, sp.error_msg, sp.posted_at,
-           p.name as product_name
-    FROM social_posts sp
-    JOIN products p ON sp.product_id = p.id
-    ORDER BY sp.created_at DESC LIMIT 20
-  `).all();
+    const recentActivityRes = await db.execute(`
+      SELECT sp.network, sp.status, sp.error_msg, sp.posted_at,
+             p.name as product_name
+      FROM social_posts sp
+      JOIN products p ON sp.product_id = p.id
+      ORDER BY sp.created_at DESC LIMIT 20
+    `);
+    const recentActivity = recentActivityRes.rows;
 
-  const scheduled = db.prepare(
-    "SELECT COUNT(*) as n FROM products WHERE status = 'scheduled'"
-  ).get().n;
+    const scheduledRes = await db.execute(
+      "SELECT COUNT(*) as n FROM products WHERE status = 'scheduled'"
+    );
+    const scheduled = scheduledRes.rows[0]?.n || 0;
 
-  res.json({
-    totalProducts,
-    thisMonth,
-    scheduled,
-    byNetwork,
-    byCategory,
-    recentActivity,
-  });
+    res.json({
+      totalProducts,
+      thisMonth,
+      scheduled,
+      byNetwork,
+      byCategory,
+      recentActivity,
+    });
+  } catch (err) {
+    console.error('[stats-error]', err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;
